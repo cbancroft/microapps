@@ -2,12 +2,22 @@
 
 = Restclient =
 
-A helper library to make writing REST clients in python extremely simple.
+A helper library to make writing REST clients in python extremely
+simple. Specifically, while httplib2 and similar libraries are very
+efficient and powerful, doing something very simple like making a POST
+request to a url with a couple parameters can involve quite a bit of
+code. Restclient tries to make these common tasks simple. It does not
+try to do everything though. If you need to construct a request in a
+very particular way, are expecting a large result, or need better
+error handling, nothing is stopping you from using one of the lower
+level libraries directly for that. 
 
 == Installation ==
 
 If you have setuptools installed, just do "easy_install restclient"
-documentation
+
+
+== Documentation ==
 
 Restclient is very simple so the main documentation is in docstrings in the code itself. this page just serves as a quick starter.
 
@@ -37,6 +47,12 @@ POST("http://www.example.com/",async=False) # will wait for the request to compl
 
 Doing an asynchronous GET would be silly and pointless so I won't give an example of that but I'm sure you could figure it out.
 
+With any of those, if you add a return_resp=True argument, restclient
+will make the request like normal and then return the raw httplib2
+response object. You'll have to extract the response body yourself,
+but you'll also have access to the HTTP response codes, etc. If you
+need finer grain control of the request, you are encouraged to just
+use httplib2 directly. 
 
 == Download ==
 
