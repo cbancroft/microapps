@@ -1,0 +1,58 @@
+For the latest installation notes, please see:
+
+http://microapps.sourceforge.net/tasty/installation.html
+
+basically, though:
+
+
+First, you'll need a database (preferably postgresql; that's what the
+rest of this document will use as an example. it should work with just
+about any database that SQLObject supports though) installed and
+running on your system. Then you'll need to install
+setuptools/easy_install (if you don't already have it installed).
+
+currently, you need to get it out of svn trunk:
+
+% svn co https://svn.sourceforge.net/svnroot/microapps/tasty/trunk Tasty
+
+The easiest path to installation is then to use the workingenv.py
+script in the project directory to download and install all of the
+python dependencies for you:
+
+% cd Tasty/
+% python workingenv.py -r requirements.txt working-env
+
+That will create a 'working-env' directory with all of the
+requirements installed in it. You must then activate the environment
+to run tasty:
+
+% source working-env/bin/activate
+
+You should then run the unit tests to make sure everything was
+installed properly. It should look something like:
+
+% nosetests
+............................
+----------------------------------------------------------------------
+Ran 28 tests in 2.876s
+
+OK
+
+To set up the database (again, using PostgreSQL as the example),
+you'll need to create a database user and a new database:
+
+% createuser tasty
+% createdb tasty
+
+If you change either of those, you'll want to change the entries in dev.cfg and/or prod.cfg
+
+TurboGears can then set up the database tables with:
+
+% tg-admin sql create
+
+And it should be ready to run:
+
+% python start-tasty.py
+# or, for a production setup (no auto-reloading, etc)
+% python start-tasty.py prod.cfg
+
