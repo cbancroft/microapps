@@ -1,3 +1,5 @@
+# summary Full-text search microapp
+
 = Fozzy =
 
 Fozzy is a full-text search service. It utilizes PostgreSQL's tsearch2 engine to do the hard work of stemming and searching. Its interface is just an extremely simple REST API so it can easily be integrated into just about any other application.
