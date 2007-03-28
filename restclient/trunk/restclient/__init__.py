@@ -217,6 +217,8 @@ def fix_params(params={}):
             new_v = params[k].encode('utf8')
             params[new_k] = new_v
             del params[k]
+        except UnicodeDecodeError:
+            pass
     return params
 
 def fix_headers(headers={}):
@@ -235,6 +237,8 @@ def fix_headers(headers={}):
             new_v = headers[k].encode('utf8')
             headers[new_k] = new_v
             del headers[k]
+        except UnicodeDecodeError:
+            pass
     return headers
 
 def fix_files(files={}):
