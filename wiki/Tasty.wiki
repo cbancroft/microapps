@@ -1,0 +1,17 @@
+#summary Tagging microapp
+
+
+= Tasty =
+
+Tasty is a full featured, efficient tagging engine accessible entirely through a REST interface. You can think of it as del.icio.us but designed to be embedded within an application (or multiple applications). Since the interface is just REST, it can be embedded in an application written in any programming language (as long as that language supports basic HTTP). Tasty is written in python, using the TurboGears framework.
+
+  * Requirements
+  * Installation
+  * Tag Model
+  * REST Interface
+  * Client Implementations
+  * Sites 
+
+Please use the microapps Google Group to discuss Tasty and make feature requests. Use the Issue tracker here to report bugs. 
+
+Tasty was developed at the [http://ccnmtl.columbia.edu/ Columbia Center For New Media Teaching And Learning].
