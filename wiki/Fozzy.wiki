@@ -1,4 +1,4 @@
-# summary Full-text search microapp
+#summary Full-text search microapp
 
 = Fozzy =
 
