@@ -1,0 +1,2 @@
+db_module=fozzy.model
+history_dir=$base/fozzy/sqlobject-history

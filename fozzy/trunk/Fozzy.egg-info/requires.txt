@@ -1,0 +1,2 @@
+TurboGears >= 0.8a5
+restresource >= 0.1

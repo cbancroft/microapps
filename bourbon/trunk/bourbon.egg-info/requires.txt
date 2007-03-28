@@ -1,0 +1,8 @@
+SQLAlchemy
+wsgiref >= 0.1.2
+selector >= 0.8.11
+simplejson >= 1.4
+nose >= 0.9.1
+PasteScript > 0.9.7
+Paste >= 0.9.7
+PasteDeploy >= 0.9.7

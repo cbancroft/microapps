@@ -1,0 +1,15 @@
+-Z
+-f http://vyv.ccnmtl.columbia.edu/eggs/
+restresource == 0.1
+psycopg2
+restclient == 0.9.2
+kid >= 0.8
+CherryPy == 2.1.1
+SQLObject ==0.7bugfix,>=0.7.1dev_r1457
+json-py >= 3.4
+elementtree >= 1.2.6
+cElementTree >= 1.0.2
+FormEncode ==0.4,==0.5.1
+TurboGears == 0.8.9
+TestGears >= 0.2
+nose

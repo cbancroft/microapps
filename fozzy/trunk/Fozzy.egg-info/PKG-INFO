@@ -1,0 +1,17 @@
+Metadata-Version: 1.0
+Name: Fozzy
+Version: 0.7
+Summary: Full-Text search REST Service
+Home-page: http://code.thraxil.org/fozzy/
+Author: Anders Pearson
+Author-email: anders@columbia.edu
+License: http://www.gnu.org/licenses/gpl.html
+Description: REST service that provides full-text search using postgresql's tsearch engine.
+Platform: any
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Internet :: WWW/HTTP
+Classifier: Topic :: Internet :: WWW/HTTP :: Dynamic Content 

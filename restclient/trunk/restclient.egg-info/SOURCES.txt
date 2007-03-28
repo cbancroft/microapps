@@ -1,0 +1,8 @@
+sample.jpg
+setup.py
+thumb.jpg
+restclient/__init__.py
+restclient.egg-info/PKG-INFO
+restclient.egg-info/SOURCES.txt
+restclient.egg-info/not-zip-safe
+restclient.egg-info/top_level.txt

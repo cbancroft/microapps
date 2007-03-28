@@ -1,0 +1,14 @@
+Metadata-Version: 1.0
+Name: bourbon
+Version: 0.1
+Summary: WSGI + Paste + SQLAlchemy based microapp framework
+Home-page: UNKNOWN
+Author: Anders Pearson
+Author-email: anders@columbia.edu
+License: GPL
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
