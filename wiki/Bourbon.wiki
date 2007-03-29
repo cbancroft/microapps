@@ -34,6 +34,18 @@ methods are then accessible via HTTP.
   * eliminate need for 'python setup.py develop' step
   * logging configuration
 
+== Installation ==
+
+Currently, you need to check it out of the microapps SVN repository: 
+
+{{{
+   $ svn co http://microapps.googlecode.com/svn/bourbon/trunk/ bourbon
+   $ cd bourbon
+   $ easy_install .
+}}}
+
+Eggs coming soon to a Cheeseshop near you. 
+
 == Example ==
 
 Say we want to create a very simple microapp that stores
