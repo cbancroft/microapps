@@ -59,7 +59,7 @@ We first use paster to create a skeleton bourbon project for us:
 }}}
 
 Enter whatever information you want when it prompts you. The result
-will be a directory called 'storytime' with the following structure:
+will be a directory called '{{{storytime}}}' with the following structure:
 
 {{{
           /setup.py
@@ -72,7 +72,7 @@ will be a directory called 'storytime' with the following structure:
 		    wsgiapp.py
 }}}
 
-Next we need to define our model in storytime/model.py. Add the
+Next we need to define our model in {{{storytime/model.py}}}. Add the
 following to it:
 
 {{{
@@ -105,7 +105,7 @@ straightforward. Note that the model contains nothing Bourbon
 related. It's just a plain SQLAlchemy model and could be imported into
 and used with anything else. 
 
-storytime/controllers.py sets up the HTTP -> model mapping. We need to
+{{{storytime/controllers.py}}} sets up the HTTP -> model mapping. We need to
 create some controller objects and map them to urls. Add two
 controller classes:
 
@@ -136,8 +136,8 @@ our controllers and putting a couple particular variables into the
 WSGI environ so Bourbon can automatically construct/fetch the right
 model objects. 
 
-development.ini is a standard paste.deploy config file that
-'paster serve' can run. Edit it to change the port number and/or the
+{{{development.ini}}} is a standard paste.deploy config file that
+'{{{paster serve}}}' can run. Edit it to change the port number and/or the
 database connection info (defaults to port 9080 and a sqlite database
 named for the package).
 
@@ -184,14 +184,14 @@ add some categories:
   {"members": [{"href": "world"}, {"href": "local"}], "next": null}
 }}}
 
-GET /world gets the category itself
+{{{GET /world}}} gets the category itself
 
 {{{
   $ curl http://localhost:9080/world
   {"name": "world"}
 }}}
 
-while GET /world/ gets the collection of stories in the category
+while {{{GET /world/}}} gets the collection of stories in the category
 (currently none)
 
 {{{
@@ -199,7 +199,7 @@ while GET /world/ gets the collection of stories in the category
   {"members": [], "next": null}
 }}}
 
-DELETE the local category:
+{{{DELETE}}} the local category:
 
 {{{
   $ curl -X DELETE http://localhost:9080/local
@@ -222,8 +222,8 @@ an alternate way to add a story:
   "rather-donuts"}' http://localhost:9080/world/
 }}}
 
-The second approach uses a POST to the collection instead of a direct
-PUT to the resource location. This is how you'll want to do it anytime
+The second approach uses a {{{POST}}} to the collection instead of a direct
+{{{PUT}}} to the resource location. This is how you'll want to do it anytime
 you use auto-generated keys, or if, eg, the slug was being
 automatically generated from the title or something. 
 
@@ -232,8 +232,8 @@ In the style of the Atom API and Ruby on Rails' SimplyREST, you can
 also define additional actions for controllers to respond to. That's
 what the '{noun}' stuff in the url mapping was for. You just need to
 add a method to the appropriate controller object with a name of
-'<http method>_<noun>'. Eg, to respond to a GET request on
-'/world;edit_form' you would add a method to CategoryCollection:
+'{{{<http method>_<noun>}}}'. Eg, to respond to a {{{GET}}} request on
+'{{{/world;edit_form}}}' you would add a method to {{{CategoryCollection}}}:
 
 {{{
     def get_edit_form(self, environ, start_response):
@@ -243,7 +243,7 @@ add a method to the appropriate controller object with a name of
 
 Within that method, you may want to access the SQLAlchemy session and
 the model object that the controller is mapped to. you can do that
-with self._session() and self._fetch(environ) respectively. 
+with {{{self._session()}}} and {{{self._fetch(environ)}}} respectively. 
 
 All methods are automatically wrapped in a transaction. Raising an
 exception will cause it to rollback. 
