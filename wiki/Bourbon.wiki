@@ -45,7 +45,7 @@ We first use paster to create a skeleton bourbon project for us:
 
 {{{
    $ paster create -t bourbon storytime
-}}
+}}}
 
 Enter whatever information you want when it prompts you. The result
 will be a directory called 'storytime' with the following structure:
