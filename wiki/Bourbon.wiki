@@ -10,8 +10,7 @@ deploy simple microapps.
 The idea is that you define a database model (with
 [http://sqlalchemy.org/ SQLAlchemy]
 currently) and some minimal controller classes that tie that model to
-some url patterns (via [http://lukearno.com/projects/selector/
-Selector] and [http://bitworking.org/news/wsgicollection WSGICollection]) and the usual CRUD
+some url patterns (via [http://lukearno.com/projects/selector/ Selector] and [http://bitworking.org/news/wsgicollection WSGICollection]) and the usual CRUD
 methods are then accessible via HTTP. 
 
 === Current Features ===
