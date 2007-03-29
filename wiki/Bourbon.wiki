@@ -3,25 +3,28 @@
 = Bourbon =
 
 == Introduction ==
+
 Bourbon is a small framework designed to make it easy to develop and
 deploy simple microapps. 
 
-The idea is that you define a database model (with SQLAlchemy
+The idea is that you define a database model (with
+[http://sqlalchemy.org/ SQLAlchemy]
 currently) and some minimal controller classes that tie that model to
-some url patterns (via Selector and WSGICollection) and the usual CRUD
+some url patterns (via [http://lukearno.com/projects/selector/
+Selector] and [http://bitworking.org/news/wsgicollection WSGICollection]) and the usual CRUD
 methods are then accessible via HTTP. 
 
-Current Features:
+=== Current Features ===
 
   * Basic HTTP method to -> CRUD mapping. 
   * JSON loading and rendering
   * automatic transaction support
-  * strict adherence to rfc2616 (HTTP 1.1)
+  * strict adherence to [http://www.faqs.org/rfcs/rfc2616.html rfc2616] (HTTP 1.1)
   * nested structures
-  * paste deployment with .ini config files
+  * [http://pythonpaste.org/ paste] deployment with .ini config files
   * paste template for "quickstart": paster create -t bourbon myapp
 
-Todo:
+=== Todo ===
 
   * use paste.fixture for more help with testing
   * content negotiation
@@ -48,7 +51,6 @@ Enter whatever information you want when it prompts you. The result
 will be a directory called 'storytime' with the following structure:
 
 {{{
--------------------------------------
           /setup.py
 	  /development.ini
 	  /storytime.db
@@ -57,14 +59,12 @@ will be a directory called 'storytime' with the following structure:
 		    model.py
 		    controllers.py
 		    wsgiapp.py
--------------------------------------
 }}}
 
 Next we need to define our model in storytime/model.py. Add the
 following to it:
 
 {{{
--------------------------------------
 # tables
 category_table = Table('category', metadata,
                       Column('name', String(256), primary_key=True))
@@ -87,7 +87,6 @@ class Story(object):
 categorymapper = mapper(Category,category_table,properties = {
     'stories' : relation(Story, cascade="all, delete-orphan",backref='category')})
 storymapper    = mapper(Story,story_table)
-----------------------------------------
 }}}
 
 Pretty basic. SQLAlchemy can be a bit verbose, but it's
@@ -100,7 +99,6 @@ create some controller objects and map them to urls. Add two
 controller classes:
 
 {{{
-----------------------------------------
 class CategoryCollection(Resource):
     domain_class = Category
     id_column    = Category.c.name
@@ -112,16 +110,13 @@ class StoryCollection(Resource):
                         param                  = "categoryname",
                         parent_class           = Category,
                         parent_class_id_column = Category.c.name)
-----------------------------------------
 }}}
 
 and then add two corresponding url mappers to the end:
 
 {{{
-----------------------------------------
 urls.add('/[{id:word}][;{noun}]',                   _ANY_=CategoryCollection())
 urls.add('/{categoryname}/[{id:word}][;{noun}][/]', _ANY_=StoryCollection())
-----------------------------------------
 }}}
 
 This is best understood starting with the last couuple lines. Those
