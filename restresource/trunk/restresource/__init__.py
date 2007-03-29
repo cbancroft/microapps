@@ -11,9 +11,9 @@ cherrypy.root = MainController()
 cherrypy.root.user = UserController()
 
 class PostController(RESTResource):
-    def index(self,post):
+    def read(self,post):
         return post.as_html()
-    index.expose_resource = True
+    read.expose_resource = True
 
     def delete(self,post):
         post.destroySelf()
@@ -26,11 +26,11 @@ class PostController(RESTResource):
         return "ok"
     update.expose_resource = True
 
-    def add(self, post, title="", body="")
+    def create(self, post, title="", body="")
         post.title = title
         post.body = body
         return "ok"
-    update.expose_resource = True
+    create.expose_resource = True
 
     def REST_instantiate(self, slug, **kwargs):
         try:
@@ -46,9 +46,9 @@ class PostController(RESTResource):
 class UserController(RESTResource):
     REST_children = {'posts' : PostController()}
 
-    def index(self,user):
+    def read(self,user):
         return user.as_html()
-    index.expose_resource = True
+    read.expose_resource = True
 
     def delete(self,user):
         user.destroySelf()
@@ -61,11 +61,11 @@ class UserController(RESTResource):
         return "ok"
     update.expose_resource = True
 
-    def add(self, user, fullname="", email=""):
+    def create(self, user, fullname="", email=""):
         user.fullname = fullname
         user.email = email
         return "ok"
-    add.expose_resource = True
+    create.expose_resource = True
 
     def extra_action(self,user):
         # do something else
@@ -85,10 +85,11 @@ then, the site would have urls like:
     /user/bob
     /user/bob/posts/my-first-post
     /user/bob/posts/my-second-post
+    /user/bob/extra_action
 
-which represent REST resources. calling 'GET /usr/bob' would call the index() method on UserController
+which represent REST resources. calling 'GET /usr/bob' would call the read() method on UserController
 for the user bob. 'PUT /usr/joe' would create a new user with username 'joe'. 'DELETE /usr/joe'
-would delete that user. 'GET /usr/bob/posts/my-first-post' would call index() on the Post Controller
+would delete that user. 'GET /usr/bob/posts/my-first-post' would call read() on the Post Controller
 with the post with the slug 'my-first-post' that is owned by bob.
 
 
@@ -101,14 +102,14 @@ def strip_empty(path):
 
 class RESTResource:
     # default method mapping. ie, if a GET request is made for
-    # the resource's url, it will try to call an index() method (if it exists);
-    # if a PUT request is made, it will try to call an add() method.
+    # the resource's url, it will try to call an read() method (if it exists);
+    # if a PUT request is made, it will try to call an create() method.
     # if you prefer other method names, just override these values in your
     # controller with REST_map
     REST_defaults = {'DELETE' : 'delete',
-                     'GET' : 'index',
+                     'GET' : 'read',
                      'POST' : 'update',
-                     'PUT' : 'add'}
+                     'PUT' : 'create'}
     REST_map = {}
     # if the resource has children resources, list them here. format is
     # a dictionary of name -> resource mappings. ie,
@@ -144,44 +145,73 @@ class RESTResource:
         # without doing anything
         return d
 
-    def REST_dispatch(self, resource, **params):
+    def REST_dispatch(self, resource, resource_params, **params):
         # if this gets called, we assume that default has already
         # traversed down the tree to the right location and this is
         # being called for a raw resource
         method = cherrypy.request.method
-        if self.REST_map.has_key(method):
+
+        param_method = None
+        if resource_params:
+            param_method = method.lower() + '_' + resource_params.pop(0)
+
+        if param_method:
+            m = getattr(self,param_method)
+        elif self.REST_map.has_key(method):
             m = getattr(self,self.REST_map[method])
-            if m and getattr(m, "expose_resource"):
-                return m(resource,**params)
-        else:
-            if self.REST_defaults.has_key(method):
-                m = getattr(self,self.REST_defaults[method])
-                if m and getattr(m, "expose_resource"):
-                    return m(resource,**params)
+        elif self.REST_defaults.has_key(method):
+            m = getattr(self,self.REST_defaults[method])
+
+        if m and getattr(m, "expose_resource"):
+            return m(resource,*resource_params,**params)
 
         raise cherrypy.NotFound
 
     @cherrypy.expose
     def default(self, *vpath, **params):
-        if not vpath:
-            return self.CT_dispatch(self.list(**params))
-        # Make a copy of vpath in a list
-        vpath = list(vpath)
-        # strip out any empty elements from the path
-        # this can happen if there's a // in the url
-        vpath = strip_empty(vpath)
+        resource_id = None
+        resource_params = list() #anything between ;'s
+        if vpath:
+            # Make a copy of vpath in a list
+            vpath = list(vpath)
+            # strip out any empty elements from the path
+            # this can happen if there's a // in the url
+            vpath = strip_empty(vpath)
+
+            resource_params = vpath.pop(0).split(';')
+            resource_id = resource_params.pop(0)
+            if vpath and vpath[0].startswith(';'):
+                resource_params.extend(vpath.pop(0).split(';')[1:])
+            
+        if not vpath and not resource_id:
+            #this means the request is connected to the collection
+            #rather than a resource member
+            collection_method = cherrypy.request.method.lower()
+            #if there's a method POST, PUT, etc call that
+            #this is for the collection, not the resource
+            if resource_params:
+                collection_method = '_'.join((collection_method,
+                                              resource_params.pop(0) ))
+            m = getattr(self, collection_method, self.list)
+            return self.CT_dispatch(m(*resource_params, **params))
+
         # Coerce the ID to the correct db type
-        resource = self.get_resource(vpath.pop(0),params)
+        resource = self.getresource(resource_id,params,resource_params)
         
         # There may be further virtual path components.
         # Try to map them to methods in children or this class.
         if vpath:
-            return self.map_vpath(resource,vpath,params)
+            return self.map_vpath(resource,resource_params,vpath,params)
         # No further known vpath components. Call a default handler
         # based on the method
-        return self.CT_dispatch(self.REST_dispatch(resource,**params))
+        return self.CT_dispatch(self.REST_dispatch(resource,resource_params,**params))
+            
 
-    def get_resource(self,atom,params):
+    def getresource(self,atom,params,resource_params):
+        """not doing anything with resource_params
+        this could in theory be sent along to REST_* functions
+        it is named without an '_' to avoid clobber from a '/col/;resource' hook
+        """
         resource = self.REST_instantiate(atom, **params)
         if resource is None:
             if cherrypy.request.method in ["PUT","POST"]:
@@ -192,7 +222,7 @@ class RESTResource:
         return resource
 
 
-    def map_vpath(self,resource,vpath,params):
+    def map_vpath(self,resource,resource_params,vpath,params):
         a = vpath.pop(0)
         if self.REST_children.has_key(a):
             c = self.REST_children[a]
@@ -206,9 +236,8 @@ class RESTResource:
             # path component was specified but doesn't
             # map to anything exposed and callable
             raise cherrypy.NotFound
-        
 
-    def REST_instantiate(self, id,**kwargs):
+    def REST_instantiate(self, id, *params, **kwargs):
         """ instantiate a REST resource based on the id
 
         this method MUST be overridden in your class. it will be passed
@@ -221,7 +250,7 @@ class RESTResource:
         """
         raise cherrypy.NotFound
 
-    def REST_create(self, id, **kwargs):
+    def REST_create(self, id, *params, **kwargs):
         """ create a REST resource with the specified id
 
         this method should be overridden in your class.

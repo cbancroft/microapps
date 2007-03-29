@@ -44,7 +44,7 @@ class MainController:
 
 class PostController(RESTResource):
     @cherrypy.expose()
-    def index(self,post):
+    def read(self,post):
         return post.as_html()
 
     @cherrypy.expose()
@@ -59,7 +59,7 @@ class PostController(RESTResource):
         return "ok"
 
     @cherrypy.expose()
-    def add(self, post, title="", body=""):
+    def create(self, post, title="", body=""):
         post.title = title
         post.body = body
         return "ok"
@@ -80,7 +80,7 @@ class UserController(RESTResource):
     REST_children = {'posts' : PostController()}
 
     @cherrypy.expose()
-    def index(self,user):
+    def read(self,user):
         return user.as_html()
 
     @cherrypy.expose()
@@ -95,7 +95,7 @@ class UserController(RESTResource):
         return "ok"
 
     @cherrypy.expose()
-    def add(self, user, fullname="", email=""):
+    def create(self, user, fullname="", email=""):
         user.fullname = fullname
         user.email = email
         return "ok"
