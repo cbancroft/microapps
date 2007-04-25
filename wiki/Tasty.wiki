@@ -127,8 +127,6 @@ the basic 'tag item' request looks like:
  PUT /service/<servicename>/user/<username>/item/<itemname>/tag/<tag>/
 }}}
 
-(PUT will also work although the current implementation doesn't respond with the correct status codes yet).
-
 to get a list of what tags a user has tagged an item with:
 
 {{{
