@@ -104,8 +104,7 @@ It should be ready to run:
 
 The recommended approach to deployment is to run Tasty as a standalone
 server behind an Apache (or lighttpd or nginx or ...)
-proxy. [http://thraxil.org/users/anders/posts/2006/09/13/TurboGears-Deployment-with-supervisord-and-workingenv-py/
-This article] covers how to set up a good production deployment of a TurboGears application and it's instructions should work fine for Tasty.
+proxy. [http://thraxil.org/users/anders/posts/2006/09/13/TurboGears-Deployment-with-supervisord-and-workingenv-py/ This article] covers how to set up a good production deployment of a TurboGears application and it's instructions should work fine for Tasty.
 
 Tasty can also be deployed as a mod_python application using mpcp. There is a mp_setup() function defined in start-tasty.py. This is a trickier deployment to set up though and is no longer recommended.
 
@@ -116,8 +115,7 @@ The core resources are Services, Users, Items, and Tags.
 The Service resource exists primarily as a form of namespacing. it allows multiple applications to use the same tag server without stomping on each others' data. all points within an application that access the tag server should use the same Service. the service MUST always be specified in every request URI.
 
 the Users, Items, and Tags use the model
-[http://tagschema.com/blogs/tagschema/2005/06/slicing-and-dicing-data-20-part-2.html
-described] on tagschema.com
+[http://tagschema.com/blogs/tagschema/2005/06/slicing-and-dicing-data-20-part-2.html described] on tagschema.com
 
 == REST API ==
 
