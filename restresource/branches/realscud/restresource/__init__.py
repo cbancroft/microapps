@@ -155,7 +155,7 @@ class RESTResource:
         if resource_params:
             param_method = method.lower() + '_' + resource_params.pop(0)
 
-        if param_method:
+        if param_method and hasattr(self,param_method):
             m = getattr(self,param_method)
         elif self.REST_map.has_key(method):
             m = getattr(self,self.REST_map[method])
@@ -190,8 +190,10 @@ class RESTResource:
             #if there's a method POST, PUT, etc call that
             #this is for the collection, not the resource
             if resource_params:
-                collection_method = '_'.join((collection_method,
-                                              resource_params.pop(0) ))
+                param_method = '_'.join((collection_method,
+                                         resource_params.pop(0) ))
+                if hasattr(self,param_method):
+                    collection_method = param_method
             m = getattr(self, collection_method, self.list)
             return self.CT_dispatch(m(*resource_params, **params))
 
@@ -224,11 +226,18 @@ class RESTResource:
 
     def map_vpath(self,resource,resource_params,vpath,params):
         a = vpath.pop(0)
+
+        obj = None
         if self.REST_children.has_key(a):
-            c = self.REST_children[a]
-            c.parents = [p for p in self.parents]
-            c.parents.append(resource)
-            return c.default(*vpath, **params)
+            obj = self.REST_children[a]
+        elif isinstance(getattr(self,a,None), RESTResource):
+            obj = getattr(self,a)
+
+        if obj:
+            obj.parents = [p for p in self.parents]
+            obj.parents.append(resource)
+            return obj.default(*vpath, **params)
+            
         method = getattr(self, a, None)
         if method and getattr(method, "expose_resource"):
             return self.CT_dispatch(method(resource, *vpath, **params))

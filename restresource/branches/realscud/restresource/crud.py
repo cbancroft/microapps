@@ -90,6 +90,15 @@ class Root(controllers.RootController):
 
 """
 
+def error_response(o):
+    """if o is a string then it's an error response
+    utility function to return errors from a sub-call to validate/error_handler
+    decorated function 
+    """
+    if not isinstance(o, str):
+        return False
+    return o
+
 #GLUE SQLObject and Widgets/Validators
 def _soc_default_SOUnicodeCol(f):
     return TextField(name=f,)
@@ -159,97 +168,74 @@ class SOController:
 
     """
     soClass = None
-    model_form = lambda self: self.crud._get_form()
-    _soc_model_form = None
+
+    #getform(action) is a function defined on the parent
+    validate_create_form = lambda self: self.getform('create')
+    validate_update_form = lambda self: self.getform('update')
 
     def __init__(self,soClass):
         self.soClass = soClass
         
-    #these get instantiated by _get_form()
-    #they do NOT get instantiated on an SOController() instantiation
-    def form_fields(self):
+    #UTILITY FUNCTIONS
+    @staticmethod
+    def parentValues(self):
+        """return SQLObject dict of """
+        kw = dict()
+        parentDict = dict([(p.sqlmeta.table, p.id) for p in self.parents])
+        for c,t in _soc_getColumns(self.crud.soClass).items():
+            if type(t)==sqlobject.col.SOForeignKey and t.foreignKey.lower() in parentDict:
+                kw[c] = parentDict[t.foreignKey.lower()]
+        return kw
+
+
+    #FORM FUNCTIONS
+    def field_widgets(self):
         """return a dictionary of fields from self.soClass to build the FormFields
-        Widget object.  This should be overridden if your form does not directly
-        correspond to the SQLObject columns list.
+        Widget object.
         """
         field_dict=dict()
-
         for f,fclass in _soc_getColumns(self.soClass).items():
             field_dict[f]= _soc_table_so_mapper[type(fclass)](f)
-
         return field_dict
     
-    def form(self,form_cls):
-        #override at will
-        pass
-
-    def _get_form(self):
-        if self._soc_model_form is not None:
-            return self._soc_model_form
-
-        #we have to sneak around WidgetsList's 'syntactic sugar' class declaration here
-        FormFields = type('FormFields', (WidgetsList,), self.form_fields())
-        class Form(TableForm):
-            #__metaclass__ = _Form
-            pass
-
-        #problem: what if you don't want to inherit from WidgetsList?
-        #it's tempting to put these classes right in SOController
-        #classes FormFields and Form would go here
-        
-        #local decorators
-        #self.form_fields(FormFields)
-        self.form(Form)
-        fields = FormFields()
-
-        self._soc_model_form = Form(fields=fields, action="./")
-
-        return self._soc_model_form
-
     @staticmethod
     def edit_form(self, table, tg_errors=None, **kwargs):
         return dict(record = table,
                     record_dict = _soc_2_dict(table), #_soc_getColumns(type(table)).keys(),
                     columns=_soc_getColumns(self.crud.soClass).keys(),
-                    form = self.crud._get_form(),
+                    form = self.getform('edit_form'),
                     error=tg_errors,
                     )
 
     @staticmethod
     def add_form(self, tg_errors=None, **kwargs):
-        return dict(form = self.crud._get_form(),
+        return dict(form = self.getform('add_form'),
                     columns=_soc_getColumns(self.crud.soClass).keys(),
                     error=tg_errors,
                     )
 
-    def _update_error(self, *pargs, **kwargs):
-        #magically, 'self' is CrudController here
-        #don't ask me why! ask error_handler!
+    def update_error(self, *pargs, **kwargs):
+        #self is CrudController instance, confusingly
         return self.get_edit_form(*pargs, **kwargs)
 
-    def _create_error(self, *pargs, **kwargs):
-        #magically, 'self' is CrudController here
-        #don't ask me why! ask error_handler!
+    def create_error(self, *pargs, **kwargs):
+        #self is CrudController instance, confusingly
         return self.get_add_form(**kwargs)
 
+    #MAIN CRUD FUNCTIONS
     @staticmethod
-    @validate(form=model_form)
-    @error_handler(_create_error)
+    @validate(form=validate_create_form)
+    @error_handler(create_error)
     def create(self, table, **kw):
-        #parents may provide foreignKey values
         if len(self.parents) > 0:
-            #update %kw from parents higher up in URL
-            parentDict = dict([(p.sqlmeta.table, p.id) for p in self.parents])
-            for c,t in _soc_getColumns(self.crud.soClass).items():
-                if type(t)==sqlobject.col.SOForeignKey and t.foreignKey.lower() in parentDict:
-                    kw[c] = parentDict[t.foreignKey.lower()]
-
+            #update %kw with parents higher up in URL with foreignKey values
+            kw.update(self.crud.parentValues(self))
         if table is None:
             table = self.crud.soClass(**kw)
         else:
             table.set(**kw)
         table._connection.commit()
-        return "ok"
+        return table
 
     @staticmethod
     def read(self,table,**kw):
@@ -258,38 +244,27 @@ class SOController:
                     ) #_soc_2_dict(table),i=table)
 
     @staticmethod
-    @validate(form=model_form)
-    @error_handler(_update_error)
+    @validate(form=validate_update_form)
+    @error_handler(update_error)
     def update(self,table,**kw):
-        if table is None:
-            table = self.crud.soClass(**kw)
-        else:
-            table.set(**kw)
+        table.set(**kw)
         table._connection.commit()
-        return "ok"
+        return table
     
     @staticmethod
     def delete(self,table):
         table.destroySelf()
-        return "ok"
+        return table
 
     @staticmethod
     def list(self, **kw):
         """what is called for /foo instead of /foo/2 """
-        #if cherrypy.request.method == 'POST':
-        #    return self.create(None,**kw)
-        #if 'add_form' in kw:
-        #    return self.add_form(**kw)
-
         return self.search(**kw)
      
     @staticmethod
     def search(self, **kw):
-        results = iter(self.crud.soClass.selectBy(**kw))
-        def dict_records():
-            for r in results:
-                yield _soc_2_dict(r)
-        return dict(members=[r for r in results] ,#list(dict_records()),
+        results = list(self.crud.soClass.selectBy(**kw))
+        return dict(members=results ,
                     columns=_soc_getColumns(self.crud.soClass).keys())
 
 
@@ -303,6 +278,36 @@ class CrudController:
     When overriding these methods, you will often just copy this version
     to get started.
     """
+    _form = None
+
+    #override if you want to inherit from a different Widgets structure
+    FormFields = WidgetsList
+    Form = TableForm
+
+    def initfields(self,action,field_dict):
+        return field_dict
+
+    #we have to sneak around WidgetsList's 'syntactic sugar' class declaration here
+    #problem: what if you don't want to inherit from WidgetsList?
+    #it's tempting to put these classes right in SOController
+    #classes FormFields and Form would go here
+    def initform(self,action):
+        FormFields = type('FormFields',
+                          (self.FormFields,),
+                          self.initfields(action,
+                                          self.crud.field_widgets())
+                          )
+        Form = self.Form
+        fields = FormFields()
+        return Form(fields=fields)
+        
+
+    def getform(self, action):
+        if not self._form:
+            self._form = self.initform(action)
+        return self._form
+
+
     def REST_instantiate(self, id, **kwargs):
         try:
             #user = self.parents[0]
@@ -315,38 +320,25 @@ class CrudController:
            (e.g. from parent controllers perhaps)"""
         return None
 
-    @expose(template='kid:restresource.templates.add')
-    def get_add_form(self, **kw):
-        return self.crud.add_form(self,**kw)
+
+    @expose(template='kid:restresource.templates.view')
+    @expose(template='json', accept_format='text/javascript')
+    def read(self,table,**kw):
+        return self.crud.read(self,table,**kw)
+    read.expose_resource = True
 
     @expose(template='kid:restresource.templates.edit')
     def get_edit_form(self, table, **kw):
         return self.crud.edit_form(self,table,**kw)
     get_edit_form.expose_resource = True
 
-    @expose(template='kid:restresource.templates.view')
-    @expose(template='json', accept_format='text/javascript')
-    def read(self,table,**kw):
-        if 'edit_form' in kw:
-            return self.edit_form(table, **kw)
-        return self.crud.read(self,table,**kw)
-    read.expose_resource = True
+    @expose(template='kid:restresource.templates.add')
+    def get_add_form(self, **kw):
+        return self.crud.add_form(self,**kw)
 
-    def post(self,**kw):
-        """when a post goes directly to /col/"""
-        return self.crud.create(self,self.REST_create(**kw),**kw)
-
-    def create(self,table,**kw):
-        return self.crud.create(self,table,**kw)
-    create.expose_resource = True
-
-    def delete(self,table,**kw):
-        return self.crud.delete(self,table,**kw)
-    delete.expose_resource = True
-
-    def update(self,table,**kw):
-        return self.crud.update(self,table,**kw)
-    update.expose_resource = True
+    def list(self,*p,**kw):
+        return self.crud.list(self,*p,**kw)
+    list.expose_resource = True
 
     @expose(template='kid:restresource.templates.list')
     @expose(template='json', accept_format='text/javascript')
@@ -354,9 +346,24 @@ class CrudController:
         return self.crud.search(self,*p,**kw)
     search.expose_resource = True
 
-    def list(self,*p,**kw):
-        return self.crud.list(self,*p,**kw)
-    list.expose_resource = True
+    def post(self,**kw):
+        """when a POST goes directly to /col/"""
+        return self.create(self.REST_create(**kw),**kw)
+
+    def create(self,table,**kw):
+        return error_response(self.crud.create(self,table,**kw)) or "ok"
+    create.expose_resource = True
+
+    def update(self,table,**kw):
+        return error_response(self.crud.update(self,table,**kw)) or "ok"
+    update.expose_resource = True
+
+    #should there be an error_handler default here?
+    def delete(self,table,**kw):
+        return error_response(self.crud.delete(self,table,**kw)) or "ok"
+    delete.expose_resource = True
+
+
 
 
     
