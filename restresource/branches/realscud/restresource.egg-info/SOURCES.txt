@@ -1,0 +1,8 @@
+setup.py
+restresource/__init__.py
+restresource.egg-info/PKG-INFO
+restresource.egg-info/SOURCES.txt
+restresource.egg-info/not-zip-safe
+restresource.egg-info/top_level.txt
+restresource/tests/__init__.py
+restresource/tests/test_server.py
