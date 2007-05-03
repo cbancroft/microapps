@@ -10,6 +10,8 @@ class Dimension(RESTResource):
     exploits the symmetry of the schema.
     """
 
+    list = list
+
     REST_content_types = {'application/xml' : 'to_xml',
                           'text/html' : 'to_html',
                           'text/plain' : 'to_json'}
@@ -28,32 +30,53 @@ class Dimension(RESTResource):
         return deunicodify(s)
 
     def delete(self,obj):
-        delete_rels(self.main.s,self.main.obj["user"],self.main.obj["item"],self.main.obj["tag"],
-                     self.main.obj["-user"],self.main.obj["-item"],self.main.obj["-tag"])
+        delete_rels(self.main.s,
+                    self.main.obj["user"],
+                    self.main.obj["item"],
+                    self.main.obj["tag"],
+                    self.main.obj["-user"],
+                    self.main.obj["-item"],
+                    self.main.obj["-tag"])
         return "ok"
     delete.expose_resource = True
 
     def index(self,obj,**params):
-        results = filter_query(self.main.s,self.main.obj["user"],self.main.obj["item"],self.main.obj["tag"],
-                               self.main.obj["-user"],self.main.obj["-item"],self.main.obj["-tag"])
+        results = filter_query(self.main.s,
+                               self.main.obj["user"],
+                               self.main.obj["item"],
+                               self.main.obj["tag"],
+                               self.main.obj["-user"],
+                               self.main.obj["-item"],
+                               self.main.obj["-tag"])
         return results
     index.expose_resource = True
 
     def related(self,obj,limit=10,**params):
-        results = related(self.main.s,self.main.obj['user'],self.main.obj['item'],self.main.obj['tag'],
-                          self.main.obj["-user"],self.main.obj["-item"],self.main.obj["-tag"],limit=limit)
+        results = related(self.main.s,
+                          self.main.obj['user'],
+                          self.main.obj['item'],
+                          self.main.obj['tag'],
+                          self.main.obj["-user"],
+                          self.main.obj["-item"],
+                          self.main.obj["-tag"],
+                          limit=limit)
         return results
     related.expose_resource = True
 
     def update(self,obj,**params):
         if len(self.parents) == 1:
             return "ok"
-        build_all_relationships(self.main.obj["user"],self.main.obj["item"],self.main.obj["tag"])
+        build_all_relationships(self.main.obj["user"],
+                                self.main.obj["item"],
+                                self.main.obj["tag"])
         return "ok"
     update.expose_resource = True
 
     def cloud(self,*args,**params):
-        results = cloud(self.main.s,self.main.obj["user"],self.main.obj["item"],self.main.obj["tag"])
+        results = cloud(self.main.s,
+                        self.main.obj["user"],
+                        self.main.obj["item"],
+                        self.main.obj["tag"])
         return results
     cloud.expose_resource = True
 
@@ -77,9 +100,11 @@ class Dimension(RESTResource):
     def REST_create(self,id,**kwargs):
         service = self.parents[0]
         if id.startswith("-"):
-            o = self.rclass(**dict([(self.rclass_id_name,id[1:]),("service",service)]))
+            o = self.rclass(**dict([(self.rclass_id_name, id[1:]),
+                                    ("service", service)]))
             self.main.obj["-" + self.rclassname].append(o)
         else:
-            o = self.rclass(**dict([(self.rclass_id_name,id),("service",service)]))
+            o = self.rclass(**dict([(self.rclass_id_name, id),
+                                    ("service", service)]))
             self.main.obj[self.rclassname].append(o)
         return o

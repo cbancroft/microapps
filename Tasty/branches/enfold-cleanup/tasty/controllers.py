@@ -3,6 +3,7 @@ import turbogears
 
 from cherrypy.filters.basefilter import BaseFilter
 from turbogears import controllers, database
+from sqlobject.util.threadinglocal import local as threading_local
 
 from restresource import RESTResource
 from simplejson import dumps as jsonify
@@ -51,6 +52,28 @@ def build_controllers():
     cherrypy.root.service = s
     return m
 
+class ObjectsDescriptor(object):
+
+    def __init__(self, name='obj'):
+        self.name = name
+        self.threadingLocal = threading_local()
+
+    def __get__(self, obj, type=None):
+        try:
+            return getattr(self.threadingLocal, self.name)
+        except AttributeError:
+            value = {"user" : [], "item" : [], "tag" : [],
+                     "-user" : [], "-item" : [], "-tag" : []}
+            setattr(self.threadingLocal, self.name, value)
+            return value
+
+    def __set__(self, obj, value):
+        if value is None:
+            try:
+                delattr(self.threadingLocal, self.name)
+            except AttributeError:
+                pass
+
 class Root(controllers.Root):
 
     _cp_filters = [TransactionsFilter()]
@@ -59,8 +82,7 @@ class Root(controllers.Root):
         return jsonify([s.name for s in Service.select()])
     index.exposed = True
 
-    obj = {"user" : [], "item" : [], "tag" : [],
-           "-user" : [], "-item" : [], "-tag" : []}
+    obj = ObjectsDescriptor()
 
     s = None
 
@@ -95,14 +117,10 @@ class ServiceController(RESTResource):
         return deunicodify(s)
 
     def REST_instantiate(self,name,**kwargs):
-        # reset accumulators. this should probably be done
-        # somewhere else. this is kind of dirty.
-        self.main.obj["tag"] = []
-        self.main.obj["user"] = []
-        self.main.obj["item"] = []
-        self.main.obj["-user"] = []
-        self.main.obj["-item"] = []
-        self.main.obj["-tag"] = []
+        # Reset accumulators. This should probably be done somewhere
+        # else. This is kind of dirty.  See the ObjectsDescriptor
+        # above to find out why we set this to None.
+        self.main.obj = None
         try:
             s = Service.byName(name.encode('utf8'))
             self.main.s = s
@@ -116,7 +134,7 @@ class ServiceController(RESTResource):
         return s
 
     def index(self,service,**kwargs):
-        results = filter_query(service,[],[],[],[],[],[])
+        results = filter_query(service, [], [], [], [], [], [])
         return results
     index.expose_resource = True
 
@@ -131,7 +149,7 @@ class ServiceController(RESTResource):
     update.expose_resource = True
 
     def cloud(self,service):
-        results = cloud(service,[],[],[])
+        results = cloud(service, [], [], [])
         return results
     cloud.expose_resource = True
 
