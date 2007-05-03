@@ -30,8 +30,6 @@ class Dimension(RESTResource):
     def delete(self,obj):
         delete_rels(self.main.s,self.main.obj["user"],self.main.obj["item"],self.main.obj["tag"],
                      self.main.obj["-user"],self.main.obj["-item"],self.main.obj["-tag"])
-        hub.commit()
-        broadcast_event("deleted",dict(service=self.main.s.name,args=self.main.to_event_str()))        
         return "ok"
     delete.expose_resource = True
 
@@ -51,8 +49,6 @@ class Dimension(RESTResource):
         if len(self.parents) == 1:
             return "ok"
         build_all_relationships(self.main.obj["user"],self.main.obj["item"],self.main.obj["tag"])
-        hub.commit()
-        broadcast_event("updated",dict(service=self.main.s.name,args=self.main.to_event_str()))                
         return "ok"
     update.expose_resource = True
 
@@ -86,5 +82,4 @@ class Dimension(RESTResource):
         else:
             o = self.rclass(**dict([(self.rclass_id_name,id),("service",service)]))
             self.main.obj[self.rclassname].append(o)
-        hub.commit()
         return o

@@ -24,11 +24,14 @@ class Service(SQLObject):
 class Orphanable:
     def delete_if_orphan(self):
         """ delete this object if there are no more references to it
-        in the user_item_tags table. """
-        if len(self.uits) == 0:
-            self.delete_me()
-        else:
-            pass
+        in the user_item_tags table. 
+        """
+
+#         if len(list(self.uits)) == 0:
+#             self.delete_me()
+#         else:
+#             pass
+        return
             
     def possible_orphans(self):
         return set(self.users + self.items + self.tags)
@@ -36,6 +39,7 @@ class Orphanable:
     def del_users(self):
         for u in self.users:
             self.removeUser(u)
+
     def del_items(self):
         for i in self.items:
             self.removeItem(i)
@@ -102,15 +106,17 @@ class UserItemTag(SQLObject):
     user_item_tag_index = DatabaseIndex('user','item','tag')
 
 def add_uit(user,tag,item):
-    r = UserItemTag.select(AND(UserItemTag.q.userID    == user.id,
-                               UserItemTag.q.tagID     == tag.id,
-                               UserItemTag.q.itemID    == item.id))
-    if r.count() == 0:
+    r = list(UserItemTag.select(AND(UserItemTag.q.userID    == user.id,
+                                    UserItemTag.q.tagID     == tag.id,
+                                    UserItemTag.q.itemID    == item.id)))
+    if len(r) != 1:
         return UserItemTag(user=user,tag=tag,item=item)
     else:
         return r[0]
 
 def build_all_relationships(users,items,tags):
+    users, items, tags = map(list, (users, items, tags))
+    pending_uit = set()
     for t in tags:
         for u in users:
             if u not in t.users:
@@ -118,10 +124,12 @@ def build_all_relationships(users,items,tags):
             for i in items:
                 if i not in u.items:
                     u.addItem(i)
-                add_uit(u,t,i)
+                pending_uit.add((u, i, t))
         for i in items:
             if i not in t.items:
                 t.addItem(i)
+    for u, i, t in pending_uit:
+        add_uit(u,t,i)
 
 def count_zeros(*lists):
     return sum([int(len(l) == 0) for l in lists])
@@ -129,7 +137,7 @@ def count_zeros(*lists):
 def del_user_item(user,item):
     r = UserItemTag.select(AND(UserItemTag.q.userID == user.id,
                                UserItemTag.q.itemID == item.id))
-    for uit in r:
+    for uit in list(r):
         uit.destroySelf()
     user.removeItem(item)
     user.delete_if_orphan()
@@ -138,7 +146,7 @@ def del_user_item(user,item):
 def del_user_tag(user,tag):
     r = UserItemTag.select(AND(UserItemTag.q.userID == user.id,
                                UserItemTag.q.tagID == tag.id))
-    for uit in r:
+    for uit in list(r):
         uit.destroySelf()
     user.removeTag(tag)
     user.delete_if_orphan()
@@ -147,7 +155,7 @@ def del_user_tag(user,tag):
 def del_item_tag(item,tag):
     r = UserItemTag.select(AND(UserItemTag.q.itemID == item.id,
                                UserItemTag.q.tagID == tag.id))
-    for uit in r:
+    for uit in list(r):
         uit.destroySelf()
     item.removeTag(tag)
     item.delete_if_orphan()
@@ -158,15 +166,16 @@ def delete_rels_zero(users,items,tags):
     for u in users:
         for i in items:
             for t in tags:
-                r = UserItemTag.select(AND(UserItemTag.q.userID == u.id,
-                                           UserItemTag.q.itemID == i.id,
-                                           UserItemTag.q.tagID == t.id))
                 possible_orphans.update(set([u,i,t]))
-                if r.count() == 1:
+                r = list(UserItemTag.select(AND(UserItemTag.q.userID == u.id,
+                                                UserItemTag.q.itemID == i.id,
+                                                UserItemTag.q.tagID == t.id)))
+                
+                if len(r) == 1:
                     r[0].destroySelf()
+
     for i in possible_orphans:
         i.delete_if_orphan()
-    
 
 
 def delete_rels_one(users,items,tags):
@@ -181,6 +190,7 @@ def delete_rels_one(users,items,tags):
 
 def delete_rels(service,users,items,tags,nusers,nitems,ntags):
     # TODO: minus stuff is ignored
+    users, items, tags, nusers, nitems, ntags = map(list, (users, items, tags, nusers, nitems, ntags))
     zeros = count_zeros(users,items,tags)
 
     # only delete the most specific relationship
@@ -202,6 +212,7 @@ def delete_rels(service,users,items,tags,nusers,nitems,ntags):
     return
 
 def build_minus(nusers,nitems,ntags):
+    nusers, nitems, ntags = map(list, (nusers, nitems, ntags))
     minus = []
     for u in nusers:
         minus += u.items
