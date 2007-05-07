@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: Tasty
-Version: 1.2dev
+Version: 1.2dev-r35
 Summary: rich, general purpose tagging engine built as a REST service
 Home-page: http://microapps.sourceforge.net/tasty/
 Author: Anders Pearson

@@ -8,6 +8,7 @@ push.conf
 pusher.py
 requirements.txt
 sample-prod.cfg
+setup.cfg
 setup.py
 start-tasty.py
 start.sh

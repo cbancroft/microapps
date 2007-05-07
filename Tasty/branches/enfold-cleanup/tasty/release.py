@@ -1,6 +1,6 @@
 # Release information about Tasty
 
-version = "1.2dev"
+version = "1.2"
 
 description = "rich, general purpose tagging engine built as a REST service"
 long_description = "rich, general purpose tagging engine built as a REST service"
