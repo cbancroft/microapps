@@ -1,0 +1,122 @@
+<html>
+  <head><title>Tasty REST API</title>
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+
+<body>
+  <div id="page">
+  <div id="sidebar">
+    <ul>
+      <li><a href="index.html">Tasty</a></li>
+      <li><a href="changelog.html">Changelog</a></li>
+      <li><a href="requirements.html">Requirements</a></li>
+      <li><a href="installation.html">Installation</a></li>
+      <li><a href="tag_model.html">Tag Model</a></li>
+      <li>REST Interface</li>
+      <li><a href="client_implementations.html">Client Implementations</a></li>
+      <li><a href="tasty_sites.html">Sites</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+<h1>REST API</h1>
+
+<p>Tasty's interface is <em>basically</em> a REST interface. There are some slight variations from the canonical approach
+but they're reasonable ones. The important thing is that all interaction with Tasty is via HTTP and makes use of
+a lot of the functionality built into HTTP (methods, URIs, Accept: headers, etc.). JSON is used as the default
+data format but HTML and XML can also be used.</p>
+
+
+<p>
+the basic 'tag item' request looks like:
+</p>
+<pre class="wiki"> PUT /service/&lt;servicename&gt;/user/&lt;username&gt;/item/&lt;itemname&gt;/tag/&lt;tag&gt;/
+
+</pre><p>
+
+(PUT will also work although the current implementation doesn't respond with the correct status codes yet).
+</p>
+<p>
+to get a list of what tags a user has tagged an item with:
+</p>
+<pre class="wiki"> GET /service/&lt;servicename&gt;/user/&lt;username&gt;/item/&lt;itemname&gt;/
+</pre><p>
+to get a list of what items a user has tagged with a given tag:
+
+</p>
+<pre class="wiki"> GET /service/&lt;servicename&gt;/user/&lt;username&gt;/tag/&lt;tag&gt;/
+
+</pre><p>
+to get a list of users who have tagged an item with a given tag:
+</p>
+<pre class="wiki"> GET /service/&lt;servicename&gt;/item/&lt;itemname&gt;/tag/&lt;tag&gt;/
+
+</pre><p>
+to remove a tag from an item for a specific user:
+</p>
+<pre class="wiki"> DELETE /service/&lt;servicename&gt;/user/&lt;username&gt;/item/&lt;itemname&gt;/tag/&lt;tag&gt;/
+
+</pre><p>
+to remove a tag from an item, for all users:
+</p>
+<pre class="wiki"> DELETE /service/&lt;servicename&gt;/item/&lt;itemname&gt;/tag/&lt;tag&gt;/
+
+</pre><p>
+etc.
+</p>
+<p>
+/service/&lt;servicename&gt;/ MUST always be the root of the request, but the other components MAY be in any order (while keeping the type/name pairs together). eg, the following requests are all equivalent and legal:
+
+</p>
+<pre class="wiki"> GET /service/&lt;servicename&gt;/user/&lt;username&gt;/item/&lt;itemname&gt;/tag/&lt;tag&gt;/
+ GET /service/&lt;servicename&gt;/item/&lt;itemname&gt;/user/&lt;username&gt;/tag/&lt;tag&gt;/
+ GET /service/&lt;servicename&gt;/tag/&lt;tag&gt;/user/&lt;username&gt;/item/&lt;itemname&gt;/
+
+
+</pre><p>
+but
+</p>
+<pre class="wiki"> GET /user/&lt;username&gt;/item/&lt;itemname&gt;/tag/&lt;tag&gt;/service/&lt;servicename&gt;/
+</pre><p>
+would be illegal.
+</p>
+<p>
+
+&lt;servicename&gt;, &lt;itemname&gt;, &lt;username&gt;, and &lt;tag&gt; all MUST be URI encoded strings. everything else is pretty much legal though. spaces, non-ascii (UTF-8 is preferred), etc. are all ok. whitespace at the beginning or end will be automatically trimmed off.
+</p>
+<p>
+lists of results will be returned in JSON format strings. if an Accept header of 'application/xml' is sent, results will instead be returned in XML.
+</p>
+<p>
+to get a list of items that a user has tagged with more than one tag (ie, the intersection):
+</p>
+
+<pre class="wiki"> GET /service/&lt;servicename&gt;/user/&lt;username&gt;/tag/&lt;tag1&gt;/tag/&lt;tag2&gt;/tag/&lt;tag3&gt;/
+
+</pre><p>
+similarly, any of the above GET, POST, or DELETE requests should support specifying multiple tags, items, and/or users. multiple services are NOT supported.
+</p>
+<h2 id="TagClouds">Tag Clouds</h2>
+
+<pre class="wiki"> GET /service/&lt;servicename&gt;/user/&lt;username&gt;/cloud
+</pre><p>
+it will return a dictionary with 'items' and 'tags' keys, each corresponding to a list of items or tags, each with a 'count' of how many times they appear for that user. 
+</p>
+<p>
+you can actually append 'cloud' to the end of just about any of those other requests above and it will return something reasonable. 
+</p>
+
+<h2 id="related">related</h2>
+<blockquote>
+<p>
+
+GET /service/&lt;servicename&gt;/item/&lt;itemname&gt;/related
+</p>
+</blockquote>
+<p>
+will return a list of items that appear to be related (based on their tags + users)
+</p>
+<p>
+also may need to specify a threshold or limit, etc. 
+</p>
+</div></div></body></html>
