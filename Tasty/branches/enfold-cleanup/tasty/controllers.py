@@ -104,7 +104,8 @@ class ServiceController(RESTResource):
                           'text/html' : 'to_html',
                           'text/plain' : 'to_json'}
     REST_default_content_type = "text/plain"
-
+    REST_map = {'PUT' : 'update'}
+    
     def to_xml(self,d):
         s = """<?xml version="1.0"?><results>""" + xmlify(sqlobject_to_strings(d)) + "</results>"
         return deunicodify(s)

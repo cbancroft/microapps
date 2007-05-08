@@ -28,10 +28,10 @@ class Orphanable:
         in the user_item_tags table. 
         """
 
-#         if len(list(self.uits)) == 0:
-#             self.delete_me()
-#         else:
-#             pass
+        if len(list(self.uits)) == 0:
+            self.delete_me()
+        else:
+            pass
         return
             
     def possible_orphans(self):
@@ -50,9 +50,9 @@ class Orphanable:
             self.removeTag(t)
 
     def delete_me(self):
-#         self.del_users()
-#         self.del_items()
-#         self.del_tags()
+        self.del_users()
+        self.del_items()
+        self.del_tags()
         self.destroySelf()
 
     def __hash__(self):
