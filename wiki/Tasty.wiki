@@ -33,7 +33,7 @@ Either download the source distribution from the [http://cheeseshop.python.org/p
 Or check a release from subversion:
 
 {{{
-% svn co https://svn.sourceforge.net/svnroot/microapps/tasty/tags/1.1 tasty
+% svn co http://microapps.googlecode.com/svn/Tasty/tags/1.3 Tasty
 }}}
 
 === Install Requirements Into Your environment ===
