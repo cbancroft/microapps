@@ -27,22 +27,6 @@ setup(
     package_data = find_package_data(where='tasty',
                                      package='tasty'),
     keywords = [
-        # Use keywords if you'll be adding your package to the
-        # Python Cheeseshop
-        
-        # if this has widgets, uncomment the next line
-        # 'turbogears.widgets',
-        
-        # if this has a tg-admin command, uncomment the next line
-        # 'turbogears.command',
-        
-        # if this has identity providers, uncomment the next line
-        # 'turbogears.identity.provider',
-    
-        # If this is a template plugin, uncomment the next line
-        # 'python.templating.engines',
-        
-        # If this is a full application, uncomment the next line
         'turbogears.app',
     ],
     classifiers = [
@@ -51,13 +35,7 @@ setup(
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Framework :: TurboGears',
-        # if this is an application that you'll distribute through
-        # the Cheeseshop, uncomment the next line
-        # 'Framework :: TurboGears :: Applications',
-        
-        # if this is a package that includes widgets that you'll distribute
-        # through the Cheeseshop, uncomment the next line
-        # 'Framework :: TurboGears :: Widgets',
+        'Framework :: TurboGears :: Applications',
     ],
     test_suite = 'nose.collector',
     )

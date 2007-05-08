@@ -6,6 +6,7 @@ import cherrypy,unittest
 
 from turbogears import database
 database.set_db_uri("sqlite:///:memory:")
+cherrypy.config.update({'global' : {'server.thread_pool' : '1'}})
 #cherrypy.config.update({'global' : {'server.environment' : 'development', 'server.logToScreen' : False}})
 
 def createTables():
@@ -46,7 +47,6 @@ def GET(url,headers={}):
     util.create_request(url,headers=headers)
     if cherrypy.response.headerMap['Content-Type'] == 'text/plain':
         obj = json_to_obj(cherrypy.response.body[0])
-        print "returning json object" + str(obj)
         return obj
     else:
         return cherrypy.response.body[0]
@@ -68,11 +68,9 @@ class TestRoot(TastyTest):
         "basic test"
         util.create_request("/")
         body = cherrypy.response.body[0]
-        print body
         assert ["testservice"] == json_to_obj(body)
 
         r = GET("/")
-        print r
         assert "testservice" in r
 
 class TestService(TastyTest):
@@ -272,8 +270,6 @@ class TestTags(TastyTest):
         DELETE("/service/testservicex/tag/z/")
         r = GET("/service/testservicex/")
 
-        r = GET("/service/testservicex/")
-
         assert {'tag' : 'z'} not in r['tags']
         assert {'tag' : 'w'} in r['tags']
         assert {'item' : 'y'} in r['items']
@@ -281,7 +277,8 @@ class TestTags(TastyTest):
         assert [{'user' : 'x'}, {'item' : 'y'}, {'tag' : 'z'}] not in r['user_item_tags']
         assert [{'user': 'x'}, {'item': 'y'}, {'tag': 'w'}] in r['user_item_tags']
 
-        r = GET("/service/testservicex/user/x")
+        r = GET("/service/testservicex/user/x/")
+        
         assert {'tag' : 'z'} not in r['tags']
         assert {'tag' : 'w'} in r['tags']
         assert {'item' : 'y'} in r['items']
@@ -344,7 +341,6 @@ class TestTags(TastyTest):
 
         # explicitly ask for text/plain (json)
         r = GET("/service/testservice/",headers={"Accept" : "text/plain"})
-        print str(r)
         assert r.has_key('tags')
 
         # ask for xml
