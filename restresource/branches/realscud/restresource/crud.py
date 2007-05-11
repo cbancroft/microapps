@@ -72,6 +72,13 @@ class Root(controllers.RootController):
 --- Features ---
 * Supports SQLObject inheritance
 
+---ISSUES---
+* crud functions should return table, but validation,etc wants it to be text
+* crud functions decorated by security will have validation inside security
+* CrudController can't have the decorators for model_form since it's not
+  available when people redeclare the methods
+* validate decorator must pair with error_handler decorator
+
 ----TODO ----
 * Not all Column types are supported.  I'm adding them as I encounter them
 
@@ -201,7 +208,7 @@ class SOController:
     @staticmethod
     def edit_form(self, table, tg_errors=None, **kwargs):
         return dict(record = table,
-                    record_dict = _soc_2_dict(table), #_soc_getColumns(type(table)).keys(),
+                    record_dict = _soc_2_dict(table), 
                     columns=_soc_getColumns(self.crud.soClass).keys(),
                     form = self.getform('edit_form'),
                     error=tg_errors,
@@ -222,10 +229,22 @@ class SOController:
         #self is CrudController instance, confusingly
         return self.get_add_form(**kwargs)
 
-    #MAIN CRUD FUNCTIONS
     @staticmethod
     @validate(form=validate_create_form)
     @error_handler(create_error)
+    def create_validation_fails(self,**kw):
+        return None
+
+    @staticmethod
+    @validate(form=validate_update_form)
+    @error_handler(update_error)
+    def update_validation_fails(self,**kw):
+        return None
+
+    #MAIN CRUD FUNCTIONS
+    @staticmethod
+    #@validate(form=validate_create_form)
+    #@error_handler(create_error)
     def create(self, table, **kw):
         if len(self.parents) > 0:
             #update %kw with parents higher up in URL with foreignKey values
@@ -244,8 +263,8 @@ class SOController:
                     ) #_soc_2_dict(table),i=table)
 
     @staticmethod
-    @validate(form=validate_update_form)
-    @error_handler(update_error)
+    #@validate(form=validate_update_form)
+    #@error_handler(update_error)
     def update(self,table,**kw):
         table.set(**kw)
         table._connection.commit()
@@ -260,9 +279,11 @@ class SOController:
     def list(self, **kw):
         """what is called for /foo instead of /foo/2 """
         return self.search(**kw)
-     
+    
     @staticmethod
     def search(self, **kw):
+        #update %kw with parents higher up in URL with foreignKey values
+        kw.update(self.crud.parentValues(self))
         results = list(self.crud.soClass.selectBy(**kw))
         return dict(members=results ,
                     columns=_soc_getColumns(self.crud.soClass).keys())
@@ -278,20 +299,30 @@ class CrudController:
     When overriding these methods, you will often just copy this version
     to get started.
     """
-    _form = None
+
+    #one form per action (create,update), so they can be different
+    #worst case, it's one duplicate
+    _form = dict()
 
     #override if you want to inherit from a different Widgets structure
     FormFields = WidgetsList
     Form = TableForm
 
     def initfields(self,action,field_dict):
+        """can add/delete/modify the fields in fielddict from defaults
+           before returning the modified field_dict object
+           param @action is 'create' or 'update'
+        """
         return field_dict
 
-    #we have to sneak around WidgetsList's 'syntactic sugar' class declaration here
+
     #problem: what if you don't want to inherit from WidgetsList?
     #it's tempting to put these classes right in SOController
     #classes FormFields and Form would go here
     def initform(self,action):
+        #we have to sneak around WidgetsList's 'syntactic sugar'
+        #class declaration here with initfields' dictionary
+        #before the superclass init gets called
         FormFields = type('FormFields',
                           (self.FormFields,),
                           self.initfields(action,
@@ -299,14 +330,15 @@ class CrudController:
                           )
         Form = self.Form
         fields = FormFields()
+        #if Form needs to get instantiated with more arguments, we'd
+        #prolly make another function like initfields() to get
+        #a **kw dict include here
         return Form(fields=fields)
         
-
     def getform(self, action):
-        if not self._form:
-            self._form = self.initform(action)
-        return self._form
-
+        if action not in self._form:
+            self._form[action] = self.initform(action)
+        return self._form[action]
 
     def REST_instantiate(self, id, **kwargs):
         try:
@@ -351,19 +383,16 @@ class CrudController:
         return self.create(self.REST_create(**kw),**kw)
 
     def create(self,table,**kw):
-        return error_response(self.crud.create(self,table,**kw)) or "ok"
+        return self.crud.create_validation_fails(self,**kw) \
+               or (self.crud.create(self,table,**kw) and "ok")
     create.expose_resource = True
 
     def update(self,table,**kw):
-        return error_response(self.crud.update(self,table,**kw)) or "ok"
+        return self.crud.update_validation_fails(self,**kw) \
+               or (self.crud.update(self,table,**kw) and "ok")
     update.expose_resource = True
 
     #should there be an error_handler default here?
     def delete(self,table,**kw):
         return error_response(self.crud.delete(self,table,**kw)) or "ok"
     delete.expose_resource = True
-
-
-
-
-    
