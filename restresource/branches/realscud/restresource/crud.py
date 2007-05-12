@@ -232,19 +232,19 @@ class SOController:
     @staticmethod
     @validate(form=validate_create_form)
     @error_handler(create_error)
-    def create_validation_fails(self,**kw):
-        return None
+    def create_validation(self,**kw):
+        import pdb
+        pdb.set_trace()
+        return kw
 
     @staticmethod
     @validate(form=validate_update_form)
     @error_handler(update_error)
-    def update_validation_fails(self,**kw):
-        return None
+    def update_validation(self,**kw):
+        return kw
 
     #MAIN CRUD FUNCTIONS
     @staticmethod
-    #@validate(form=validate_create_form)
-    #@error_handler(create_error)
     def create(self, table, **kw):
         if len(self.parents) > 0:
             #update %kw with parents higher up in URL with foreignKey values
@@ -263,8 +263,6 @@ class SOController:
                     ) #_soc_2_dict(table),i=table)
 
     @staticmethod
-    #@validate(form=validate_update_form)
-    #@error_handler(update_error)
     def update(self,table,**kw):
         table.set(**kw)
         table._connection.commit()
@@ -383,13 +381,17 @@ class CrudController:
         return self.create(self.REST_create(**kw),**kw)
 
     def create(self,table,**kw):
-        return self.crud.create_validation_fails(self,**kw) \
-               or (self.crud.create(self,table,**kw) and "ok")
+        kw = self.crud.create_validation(self,**kw)
+        return error_response(kw) \
+               or error_response(self.crud.create(self,table,**kw)) \
+               or "ok"
     create.expose_resource = True
 
     def update(self,table,**kw):
-        return self.crud.update_validation_fails(self,**kw) \
-               or (self.crud.update(self,table,**kw) and "ok")
+        kw = self.crud.update_validation(self,**kw)
+        return error_response(kw) \
+               or error_response(self.crud.update(self,table,**kw)) \
+               or "ok"
     update.expose_resource = True
 
     #should there be an error_handler default here?

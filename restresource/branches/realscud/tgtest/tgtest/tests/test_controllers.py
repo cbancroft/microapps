@@ -78,7 +78,7 @@ def test_fieldtypes_errorhandle():
 
 def test_fieldtypes_create_confirm():
     testutil.createRequest("/child1/1/fieldtypes/1",method="GET")
-    print cherrypy.response.body[0]
+    #print cherrypy.response.body[0]
     #foreignID
     assert "<td>1</td>" in cherrypy.response.body[0]
     #utf
