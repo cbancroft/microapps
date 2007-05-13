@@ -168,7 +168,25 @@ class RESTResource:
         raise cherrypy.NotFound
 
     @cherrypy.expose
+    #/child1/5/fieldtypes
+    #child1;5/fieldtypes
+    #child1/5
+    #child1/;add_form
+    #child1/add_form
     def default(self, *vpath, **params):
+        """This method will get called by default by CherryPy when it can't
+        map an object path directly (a.b.c for request /a/b/c) which if we have
+        RESTful urls (interspersed with id's) will be most of the time.
+
+        Before this would only be inherited by sub-Root controllers, but to handle
+        situations like /a;1/ or /a;add_form it needs to be sub-classed by the
+        Root Controller now.
+
+        So the logic in default() is as follows:
+        1. 
+        2. 
+        3. 
+        """
         resource_id = None
         resource_params = list() #anything between ;'s
         if vpath:
@@ -183,9 +201,12 @@ class RESTResource:
             if vpath and vpath[0].startswith(';'):
                 resource_params.extend(vpath.pop(0).split(';')[1:])
             
-        if not vpath and not resource_id:
-            #this means the request is connected to the collection
-            #rather than a resource member
+        if not resource_id:
+            #we don't have an id, so it's either the collection
+            #OR we want to pass handling to the collection object to
+            #figure it out.
+            ##this means the request is connected to the collection
+            ##rather than a resource member
             collection_method = cherrypy.request.method.lower()
             #if there's a method POST, PUT, etc call that
             #this is for the collection, not the resource

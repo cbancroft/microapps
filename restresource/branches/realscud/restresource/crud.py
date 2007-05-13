@@ -233,8 +233,8 @@ class SOController:
     @validate(form=validate_create_form)
     @error_handler(create_error)
     def create_validation(self,**kw):
-        import pdb
-        pdb.set_trace()
+        #import pdb
+        #pdb.set_trace()
         return kw
 
     @staticmethod
