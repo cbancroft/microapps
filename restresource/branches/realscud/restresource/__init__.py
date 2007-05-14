@@ -250,7 +250,6 @@ class RESTResource:
             #    even if there is more vpath?
         if vpath:
             (rname,rparams) = self.parse_resource_token(vpath.pop(0))
-            #hunting for ids here is kind of like look-ahead
             if REST_ids_are_root:
                 if rname:
                     #rname is an id
@@ -275,6 +274,8 @@ class RESTResource:
             if rname:
                 return self.map_vpath(resources,rname,rparams,vpath,params)
             else:
+                #urls like: /col/id/;edit_form AND /col/;add_form
+                #corner case: if /col/;1/;2 then ';2' might get lost here
                 resource_params.extend(rparams)
 
         #if we get here, vpath is exhausted
@@ -282,7 +283,7 @@ class RESTResource:
         if resource:
             return self.REST_dispatch()
         else:
-            return self.REST_collection_dispatch(r)
+            return self.REST_collection_dispatch(rparams)
             #still outstanding:
             # if REST_ids_are_root and not resource, then resource_params might have dispatch info
             #   and if rname or rparams (had vpath) then that might dispatch to function or object
