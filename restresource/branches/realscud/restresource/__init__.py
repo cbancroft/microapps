@@ -123,15 +123,15 @@ class RESTResource:
     REST_content_types = {}
     REST_default_content_type = ""
 
-    # REST_params_are_ids
+    # REST_ids_are_root
     # 'params' are parameters in a URI separated by ;'s
     # They can represent ids or methods/objects
-    # Sample params_are_ids=True uri (better for resource 'context' using /'s)
+    # Sample REST_ids_are_root=False uri (better for resource 'context' using /'s)
     # /col;4/edit_form
-    # Sample params_are_ids=False uri (same as wsgiCollection)
+    # Sample REST_ids_are_root=True uri (same as wsgiCollection)
     # /col/4;edit_form
 
-    REST_params_are_ids = False
+    REST_ids_are_root = True
 
     def CT_dispatch(self,d):
         method = cherrypy.request.method
@@ -177,6 +177,11 @@ class RESTResource:
 
         raise cherrypy.NotFound
 
+    def parse_resource_token(self,token):
+        resource_params = token.split(';')
+        resource_name = resource_params.pop(0)
+        return (resource_name,resource_params)
+
     @cherrypy.expose
     #/child1/5/fieldtypes
     #child1;5/fieldtypes
@@ -194,7 +199,7 @@ class RESTResource:
 
         So default() now simply handles one token between /'s and other
         methods dispatch handling
-        
+
         * pass resource to sub-object (update obj.parents first)
         * call local method
         * get_id
@@ -211,13 +216,91 @@ class RESTResource:
             # this can happen if there's a // in the url
             vpath = strip_empty(vpath)
 
-            resource_params = vpath.pop(0).split(';')
-            resource_name = resource_params.pop(0)
+            (resource_name, resource_params) = self.parse_resource_token(vpath.pop(0))
+            #.split(';')
+            #resource_name = resource_params.pop(0)
             #if vpath and vpath[0].startswith(';'):
             #    resource_params.extend(vpath.pop(0).split(';')[1:])
 
         #from here on, we want everything out of default()
+        return self.default_dispatcher(resource_name,
+                                       resource_params,
+                                       vpath,
+                                       params)
+
+    def default_dispatcher(self,myname,resource_params,vpath,params):
+        # coming in, vpath has already consumed the top-most resource
+        # resource_params will turn into the 'params' that affect function/object dipatch
+        # 
+        
+        resource = None
+        if resource_params:
+            if not REST_ids_are_root:
+                resource = self.getresource(resource_params, params)
+                #resource_params should be consumed here
+                resource_params = []
+                
+            #else:
+            #   ?should we dispatch using the parameters
+            #    even if there is more vpath?
             
+        if vpath:
+            (rname,rparams) = self.parse_resource_token(vpath[0])
+            if not REST_ids_are_root and not resource and rparams:
+                resource = self.getresource(rparams, params)
+                #rparams should be consumed here
+                rparams = []
+                vpath.pop(0)
+
+            if REST_ids_are_root and rname:
+                #rname is an id
+                resource = self.getresource((rname), params)
+                #rname is consumed here
+                rname = None
+                vpath.pop(0)
+        #still outstanding:
+        # if REST_ids_are_root and not resource, then resource_params might have dispatch info
+        #   and if rname or rparams (had vpath) then that might dispatch to function or object
+        # if not REST_ids_are_root
+        #   if rname then  dispatch to function/obj
+        #   else 
+                
+            if rname or rparams:
+                #cases: terminally use (rname,rparams) for dispatch OR more vpath 
+                #if we've still got something left
+                #map_vpath()
+
+        #optiosn:
+        # rest_dispatch
+        # collection_dispatch
+        # object_dispatch
+
+        #terminal location
+        if resource:
+            
+            #rname,rparams could still be about the next resource child    
+            #else:
+            #    rparams.insert(0,rname)
+                
+
+            #?what happens to rname/rparams?
+        if not vpath and resource:
+            #rest dispatch
+        else:
+            #map_vpath(resource_params,vpath)
+            #if no more vpath, then use resource_params to col_dispatch
+            #
+
+        if vpath:
+            #return map_vpath(resource)
+            #add resource to child
+        else:
+            #rest dispatch
+
+
+                
+
+        ##OLD code
         if not resource_id:
             #we don't have an id, so it's either the collection
             #OR we want to pass handling to the collection object to
@@ -247,16 +330,16 @@ class RESTResource:
         return self.CT_dispatch(self.REST_dispatch(resource,resource_params,**params))
             
 
-    def getresource(self,atom,params,resource_params):
+    def getresource(self,resource_params,params):
         """not doing anything with resource_params
         this could in theory be sent along to REST_* functions
         it is named without an '_' to avoid clobber from a '/col/;resource' hook
         """
-        resource = self.REST_instantiate(atom, **params)
+        resource = self.REST_instantiate(resource_params[0], **params)
         if resource is None:
             if cherrypy.request.method in ["PUT","POST"]:
                 # PUT and POST can be used to create a resource
-                resource = self.REST_create(atom, **params)
+                resource = self.REST_create(resource_params[0], **params)
             else:
                 raise cherrypy.NotFound
         return resource
