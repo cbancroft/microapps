@@ -159,6 +159,9 @@ class RESTResource:
         # if this gets called, we assume that default has already
         # traversed down the tree to the right location and this is
         # being called for a raw resource
+        #
+        # resource_params here is used for dispatching to a
+        # method-resource_param-based function.  ??still good idea?
         method = cherrypy.request.method
 
         param_method = None
@@ -167,6 +170,7 @@ class RESTResource:
 
         if param_method and hasattr(self,param_method):
             m = getattr(self,param_method)
+
         elif self.REST_map.has_key(method):
             m = getattr(self,self.REST_map[method])
         elif self.REST_defaults.has_key(method):
@@ -202,7 +206,7 @@ class RESTResource:
 
         * pass resource to sub-object (update obj.parents first)
         * call local method
-        * get_id
+        * getresource(id)
         * continue down vpath
         """
         #resource_id = None
@@ -215,55 +219,78 @@ class RESTResource:
             # strip out any empty elements from the path
             # this can happen if there's a // in the url
             vpath = strip_empty(vpath)
-
-            (resource_name, resource_params) = self.parse_resource_token(vpath.pop(0))
+            (rname,rparams) = self.parse_resource_token(vpath.pop(0))
+            return self.map_vpath([],rname,rparams,vpath,params)
             #.split(';')
             #resource_name = resource_params.pop(0)
             #if vpath and vpath[0].startswith(';'):
             #    resource_params.extend(vpath.pop(0).split(';')[1:])
 
-        #from here on, we want everything out of default()
-        return self.default_dispatcher(resource_name,
-                                       resource_params,
-                                       vpath,
-                                       params)
+        #elif ....
+        # i guess we should try to find index() or something METHOD-based?
 
-    def default_dispatcher(self,myname,resource_params,vpath,params):
+
+        else:
+            raise cherrypy.NotFound
+
+    def collection_dispatcher(self,myname,resource_params,vpath,params):
         # coming in, vpath has already consumed the top-most resource
         # resource_params will turn into the 'params' that affect function/object dipatch
         # 
-        
-        resource = None
+
+        #probably only ever one resource, but I need to distinguish between
+        #None and Nothing
+        resources = [] 
+
         if resource_params:
             if not REST_ids_are_root:
-                resource = self.getresource(resource_params, params)
-                #resource_params should be consumed here
-                resource_params = []
-                
+                resources.append(self.getresource(resource_params, params))
             #else:
             #   ?should we dispatch using the parameters
             #    even if there is more vpath?
-            
         if vpath:
-            (rname,rparams) = self.parse_resource_token(vpath[0])
-            if not REST_ids_are_root and not resource and rparams:
-                resource = self.getresource(rparams, params)
-                #rparams should be consumed here
-                rparams = []
-                vpath.pop(0)
+            (rname,rparams) = self.parse_resource_token(vpath.pop(0))
+            #hunting for ids here is kind of like look-ahead
+            if REST_ids_are_root:
+                if rname:
+                    #rname is an id
+                    resources.append(self.getresource((rname), params))
+                    rname = None
+                #for urls like: /col/id;edit_form
+                #here we're conscious making this equivalent to
+                #the much stranger: /col;edit_form/id
+                resource_params.extend(rparams)
+                if vpath:
+                    (rname,rparams) = self.parse_resource_token(vpath.pop(0))
 
-            if REST_ids_are_root and rname:
-                #rname is an id
-                resource = self.getresource((rname), params)
-                #rname is consumed here
-                rname = None
-                vpath.pop(0)
-        #still outstanding:
-        # if REST_ids_are_root and not resource, then resource_params might have dispatch info
-        #   and if rname or rparams (had vpath) then that might dispatch to function or object
-        # if not REST_ids_are_root
-        #   if rname then  dispatch to function/obj
-        #   else 
+            elif not REST_ids_are_root and not rname and rparams:
+                #url like: /col/;id
+                #rparams are ids
+                resources.append(self.getresource(rparams, params))
+                #corner case: multiple resources could get added in
+                #  a url like: /col;1/;2  Is that good or bad?
+                if vpath:
+                    (rname,rparams) = self.parse_resource_token(vpath.pop(0))
+                    
+            if rname:
+                return self.map_vpath(resources,rname,rparams,vpath,params)
+            else:
+                resource_params.extend(rparams)
+
+        #if we get here, vpath is exhausted
+        #so either rest_dispatch or col_dispatch
+        if resource:
+            return self.REST_dispatch()
+        else:
+            return self.REST_collection_dispatch(r)
+            #still outstanding:
+            # if REST_ids_are_root and not resource, then resource_params might have dispatch info
+            #   and if rname or rparams (had vpath) then that might dispatch to function or object
+            # if not REST_ids_are_root
+            #   if rname then  dispatch to function/obj
+            #   else if vpath(after pop)
+
+            
                 
             if rname or rparams:
                 #cases: terminally use (rname,rparams) for dispatch OR more vpath 
@@ -345,8 +372,12 @@ class RESTResource:
         return resource
 
 
-    def map_vpath(self,resource,resource_params,vpath,params):
-        a = vpath.pop(0)
+    def map_vpath(self,resources,a,rparams,vpath,params):
+        #resources is an array
+        #its needed here, just to append to the getobj
+        #so maybe resources doesn't belong in this part?
+        #'a' will be a collection or a function
+        #(a,rparams) = self.parse_resource_token(vpath.pop(0))
 
         obj = None
         if self.REST_children.has_key(a):
@@ -356,12 +387,13 @@ class RESTResource:
 
         if obj:
             obj.parents = [p for p in self.parents]
-            obj.parents.append(resource)
-            return obj.default(*vpath, **params)
+            obj.parents.extend(resources)
+            return obj.collection_dispatcher(a,rparams,vpath,params)
             
+        #?do i need an 'if resources' here?
         method = getattr(self, a, None)
         if method and getattr(method, "expose_resource"):
-            return self.CT_dispatch(method(resource, *vpath, **params))
+            return self.CT_dispatch(method(resources[0], *vpath, **params))
         else:
             # path component was specified but doesn't
             # map to anything exposed and callable
