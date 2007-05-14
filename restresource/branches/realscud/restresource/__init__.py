@@ -123,6 +123,16 @@ class RESTResource:
     REST_content_types = {}
     REST_default_content_type = ""
 
+    # REST_params_are_ids
+    # 'params' are parameters in a URI separated by ;'s
+    # They can represent ids or methods/objects
+    # Sample params_are_ids=True uri (better for resource 'context' using /'s)
+    # /col;4/edit_form
+    # Sample params_are_ids=False uri (same as wsgiCollection)
+    # /col/4;edit_form
+
+    REST_params_are_ids = False
+
     def CT_dispatch(self,d):
         method = cherrypy.request.method
         if method != 'GET':
@@ -182,13 +192,18 @@ class RESTResource:
         situations like /a;1/ or /a;add_form it needs to be sub-classed by the
         Root Controller now.
 
-        So the logic in default() is as follows:
-        1. 
-        2. 
-        3. 
+        So default() now simply handles one token between /'s and other
+        methods dispatch handling
+        
+        * pass resource to sub-object (update obj.parents first)
+        * call local method
+        * get_id
+        * continue down vpath
         """
-        resource_id = None
+        #resource_id = None
+        resource_name = None
         resource_params = list() #anything between ;'s
+        #this stays in default()
         if vpath:
             # Make a copy of vpath in a list
             vpath = list(vpath)
@@ -197,9 +212,11 @@ class RESTResource:
             vpath = strip_empty(vpath)
 
             resource_params = vpath.pop(0).split(';')
-            resource_id = resource_params.pop(0)
-            if vpath and vpath[0].startswith(';'):
-                resource_params.extend(vpath.pop(0).split(';')[1:])
+            resource_name = resource_params.pop(0)
+            #if vpath and vpath[0].startswith(';'):
+            #    resource_params.extend(vpath.pop(0).split(';')[1:])
+
+        #from here on, we want everything out of default()
             
         if not resource_id:
             #we don't have an id, so it's either the collection
