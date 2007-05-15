@@ -53,7 +53,7 @@ def test_child1_create():
     assert "ok" in cherrypy.response.body[0]
 
 def test_fieldtypes_child():
-    testutil.createRequest("/child1/1/fieldtypes",method="GET")
+    testutil.createRequest("/child1/1/fieldtypes/",method="GET")
     assert "<th>utf</th>" in cherrypy.response.body[0]
     assert "<th>currency</th>" in cherrypy.response.body[0]
     assert "<th>truefalse</th>" in cherrypy.response.body[0]
@@ -73,14 +73,14 @@ def test_fieldtypes_create():
 
 def test_fieldtypes_errorhandle():
     """currency will be a string.  Should return the form"""
-    testutil.createRequest("/child1/1/fieldtypes",
+    testutil.createRequest("/child1/1/fieldtypes/",
                            method="POST",
                            rfile=StringIO.StringIO("utf=asdf&currency=NOT_A_CURRENCY&truefalse=on&x=90&string=happyjoy&datetime=2007/1/26 16:12&date=1/26/2007&decimal=1.1"))
     assert "Please enter a number" in cherrypy.response.body[0]
 
 def test_fieldtypes_create_confirm():
-    testutil.createRequest("/child1/1/fieldtypes/1",method="GET")
-    #print cherrypy.response.body[0]
+    testutil.createRequest("/child1/1/fieldtypes/1/",method="GET")
+    print cherrypy.response.body[0]
     #foreignID
     assert "<td>1</td>" in cherrypy.response.body[0]
     #utf

@@ -159,8 +159,6 @@ class RESTResource:
         #urls like: /col/ and /col;add_form and /col/;add_form
         #AND like /col/add_form (from map_vpath)
         #if there's a method post(), put(), etc call that
-
-        #also consider here whether to redirect for trailing '/'
         collection_method = cherrypy.request.method.lower()
 
         if func_params:
@@ -186,8 +184,6 @@ class RESTResource:
         # it's based on either resource_params like /col/1;edit_form
         # or context urls like /col;1/edit_form
         # method-resource_param-based function.  ??still good idea?
-
-        #also consider here whether to redirect for trailing '/'
         method = cherrypy.request.method
 
         param_method = None
@@ -299,8 +295,17 @@ class RESTResource:
 
         if not self.REST_ids_are_root:
             resource_params = []
+
         #if we get here, vpath is exhausted
-        #so either rest_dispatch or col_dispatch
+        #redirect for trailing '/'
+        if cherrypy.request.method == 'GET' \
+               and not cherrypy.request.path.endswith('/'):
+            atoms = cherrypy.request.browser_url.split("?", 1)
+            newUrl = atoms.pop(0) + '/'
+            if atoms:
+                newUrl += "?" + atoms[0]
+            raise cherrypy.HTTPRedirect(newUrl)            
+
         if resources:
             return self.REST_dispatch(resources[0],resource_params,**params)
         else:
