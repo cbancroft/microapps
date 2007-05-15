@@ -48,6 +48,8 @@ def test_child1_create():
     testutil.createRequest("/child1/",
                            method="POST",
                            rfile=StringIO.StringIO('x=1&y=2&z=3'))
+
+    print cherrypy.response.body[0]
     assert "ok" in cherrypy.response.body[0]
 
 def test_fieldtypes_child():
@@ -66,7 +68,7 @@ def test_fieldtypes_create():
     testutil.createRequest("/child1/1/fieldtypes",
                            method="POST",
                            rfile=StringIO.StringIO("utf=asdf&currency=2.23&truefalse=on&x=90&string=happyjoy&datetime=2007/1/26 16:12&date=1/26/2007&decimal=1.1"))
-    print cherrypy.response.body[0]
+    #print cherrypy.response.body[0]
     assert "ok" in cherrypy.response.body[0]
 
 def test_fieldtypes_errorhandle():

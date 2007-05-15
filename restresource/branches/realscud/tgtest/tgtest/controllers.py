@@ -22,7 +22,7 @@ class FieldTypesController(CrudController,RESTResource):
     crud = SOController(FieldTypes)
     
 
-class Root(controllers.RootController):
+class Root(RESTResource,controllers.RootController):
 
     child1 = Child1Controller()
     child1.REST_children = {'fieldtypes':FieldTypesController()}

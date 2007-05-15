@@ -240,7 +240,7 @@ class SOController:
     @staticmethod
     @validate(form=validate_update_form)
     @error_handler(update_error)
-    def update_validation(self,**kw):
+    def update_validation(self,table,**kw):
         return kw
 
     #MAIN CRUD FUNCTIONS
@@ -366,9 +366,10 @@ class CrudController:
     def get_add_form(self, **kw):
         return self.crud.add_form(self,**kw)
 
+    @expose(template='kid:restresource.templates.list')
+    @expose(template='json', accept_format='text/javascript')
     def list(self,*p,**kw):
         return self.crud.list(self,*p,**kw)
-    list.expose_resource = True
 
     @expose(template='kid:restresource.templates.list')
     @expose(template='json', accept_format='text/javascript')
@@ -379,6 +380,7 @@ class CrudController:
     def post(self,**kw):
         """when a POST goes directly to /col/"""
         return self.create(self.REST_create(**kw),**kw)
+    post.exposed = True
 
     def create(self,table,**kw):
         kw = self.crud.create_validation(self,**kw)
@@ -388,7 +390,9 @@ class CrudController:
     create.expose_resource = True
 
     def update(self,table,**kw):
-        kw = self.crud.update_validation(self,**kw)
+        kw = self.crud.update_validation(self,table,**kw)
+        import pdb
+        pdb.set_trace()
         return error_response(kw) \
                or error_response(self.crud.update(self,table,**kw)) \
                or "ok"

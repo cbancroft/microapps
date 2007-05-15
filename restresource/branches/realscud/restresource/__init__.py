@@ -163,7 +163,7 @@ class RESTResource:
         #also consider here whether to redirect for trailing '/'
         collection_method = cherrypy.request.method.lower()
 
-        if func_params and not self.REST_ids_are_root:
+        if func_params:
             param_method = '_'.join((collection_method,
                                      func_params[0] ))
             if hasattr(self,param_method):
@@ -171,7 +171,8 @@ class RESTResource:
                 func_params.pop(0)
         m = getattr(self, collection_method, self.list)
         if getattr(m, "exposed", False):
-            return self.CT_dispatch(m(*func_params, **params))
+            #return self.CT_dispatch(m(*func_params, **params))
+            return self.CT_dispatch(m(**params))
         else:
             raise cherrypy.NotFound
             
@@ -202,7 +203,8 @@ class RESTResource:
             m = getattr(self,self.REST_defaults[method])
 
         if m and getattr(m,"expose_resource",False):
-            return m(resource,*func_params,**params)
+            #return m(resource,*func_params,**params)
+            return m(resource,**params)
 
         raise cherrypy.NotFound
 
@@ -210,6 +212,10 @@ class RESTResource:
         resource_params = token.split(';')
         resource_name = resource_params.pop(0)
         return (resource_name,resource_params)
+
+    @cherrypy.expose
+    def index(self, *vpath, **params):
+        return self.list(*vpath, **params)
 
     @cherrypy.expose
     def default(self, *vpath, **params):
@@ -235,8 +241,16 @@ class RESTResource:
             # strip out any empty elements from the path
             # this can happen if there's a // in the url
             vpath = strip_empty(vpath)
-            (rname,rparams) = self.parse_resource_token(vpath.pop(0))
-            return self.map_vpath([],rname,rparams,vpath,params)
+            #commented out case when RootController is not a RESTresource
+            #if self is a Root object
+            if self in cherrypy.tree.mount_points.values():
+                #for urls like /col;1 or /col;add_form
+                (rname,rparams) = self.parse_resource_token(vpath.pop(0))
+                return self.map_vpath([],rname,rparams,vpath,params)
+            else:
+                #non-root controller seeks for ids
+                return self.collection_dispatcher(None,[],vpath,params)
+
             #.split(';')
             #resource_name = resource_params.pop(0)
             #if vpath and vpath[0].startswith(';'):
@@ -290,8 +304,8 @@ class RESTResource:
             resource_params = []
         #if we get here, vpath is exhausted
         #so either rest_dispatch or col_dispatch
-        if resource:
-            return self.REST_dispatch(resource,resource_params,**params)
+        if resources:
+            return self.REST_dispatch(resources[0],resource_params,**params)
         else:
             return self.REST_collection_dispatch(resource_params,**params)
 
