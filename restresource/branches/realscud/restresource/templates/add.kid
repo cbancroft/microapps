@@ -6,7 +6,7 @@
 <title>Add</title>
 </head>
 <body>
-  <p py:if="error">Form Error!</p>
+  <p py:if="tg_errors">Form Error!</p>
   ${form(submit_text="Save")}
 </body>
 </html>

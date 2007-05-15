@@ -214,10 +214,6 @@ class RESTResource:
         return (resource_name,resource_params)
 
     @cherrypy.expose
-    def index(self, *vpath, **params):
-        return self.list(*vpath, **params)
-
-    @cherrypy.expose
     def default(self, *vpath, **params):
         """This method will get called by default by CherryPy when it can't
         map an object path directly (a.b.c for request /a/b/c) which if we have
@@ -247,17 +243,18 @@ class RESTResource:
                 #for urls like /col;1 or /col;add_form
                 (rname,rparams) = self.parse_resource_token(vpath.pop(0))
                 return self.map_vpath([],rname,rparams,vpath,params)
-            else:
-                #non-root controller seeks for ids
-                return self.collection_dispatcher(None,[],vpath,params)
+            #else:
+
 
             #.split(';')
             #resource_name = resource_params.pop(0)
             #if vpath and vpath[0].startswith(';'):
             #    resource_params.extend(vpath.pop(0).split(';')[1:])
-        else:
+        #non-root controller seeks for ids
+        return self.collection_dispatcher(None,[],vpath,params)
+        #else:
             #cherrypy already looks for index() for root requests
-            raise cherrypy.NotFound
+            #raise cherrypy.NotFound
 
     def collection_dispatcher(self,myname,resource_params,vpath,params):
         #already happened

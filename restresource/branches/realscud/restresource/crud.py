@@ -210,15 +210,16 @@ class SOController:
         return dict(record = table,
                     record_dict = _soc_2_dict(table), 
                     columns=_soc_getColumns(self.crud.soClass).keys(),
-                    form = self.getform('edit_form'),
-                    error=tg_errors,
+                    form = self.getform('update'),
+                    tg_errors=tg_errors,
                     )
 
     @staticmethod
     def add_form(self, tg_errors=None, **kwargs):
-        return dict(form = self.getform('add_form'),
+        #adding tg_errors=None makes it an implicit error handler
+        return dict(form = self.getform('create'),
                     columns=_soc_getColumns(self.crud.soClass).keys(),
-                    error=tg_errors,
+                    tg_errors=tg_errors,
                     )
 
     def update_error(self, *pargs, **kwargs):
@@ -233,8 +234,6 @@ class SOController:
     @validate(form=validate_create_form)
     @error_handler(create_error)
     def create_validation(self,**kw):
-        #import pdb
-        #pdb.set_trace()
         return kw
 
     @staticmethod
