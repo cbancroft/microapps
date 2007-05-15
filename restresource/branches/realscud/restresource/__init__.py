@@ -298,7 +298,8 @@ class RESTResource:
 
         #if we get here, vpath is exhausted
         #redirect for trailing '/'
-        if cherrypy.request.method == 'GET' \
+        if not resource_params \
+               and cherrypy.request.method == 'GET' \
                and not cherrypy.request.path.endswith('/'):
             atoms = cherrypy.request.browser_url.split("?", 1)
             newUrl = atoms.pop(0) + '/'
