@@ -299,7 +299,9 @@ class CrudController:
 
     #one form per action (create,update), so they can be different
     #worst case, it's one duplicate
-    _form = dict()
+    #set it in getform() so _form isn't attached to the class
+    #_form = dict()
+    
 
     #override if you want to inherit from a different Widgets structure
     FormFields = WidgetsList
@@ -333,6 +335,8 @@ class CrudController:
         return Form(fields=fields)
         
     def getform(self, action):
+        if not hasattr(self,'_form'):
+            self._form = dict()
         if action not in self._form:
             self._form[action] = self.initform(action)
         return self._form[action]
@@ -390,8 +394,6 @@ class CrudController:
 
     def update(self,table,**kw):
         kw = self.crud.update_validation(self,table,**kw)
-        import pdb
-        pdb.set_trace()
         return error_response(kw) \
                or error_response(self.crud.update(self,table,**kw)) \
                or "ok"
