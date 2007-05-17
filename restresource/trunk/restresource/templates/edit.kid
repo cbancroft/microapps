@@ -6,7 +6,7 @@
 <title>Edit</title>
 </head>
 <body>
-  <p py:if="error">Form Error!</p>
+  <p py:if="tg_errors">Form Error!</p>
   ${form(value=record_dict, submit_text="Save")}
 </body>
 </html>

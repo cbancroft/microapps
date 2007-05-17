@@ -13,7 +13,7 @@ class Child1(Parent):
     z = IntCol()
 
 class Child2(Parent):
-    q = DateTimeCol()
+    w = DateTimeCol()
     
 class FieldTypes(SQLObject):
     utf = UnicodeCol(length=255)

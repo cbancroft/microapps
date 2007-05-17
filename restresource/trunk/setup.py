@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="restresource",
-    version="0.2",
+    version="0.3",
     description="helper for writing REST services with cherrypy,turbogears",
     long_description="helper for writing REST services with cherrypy",            
     author="anders,schuyler",

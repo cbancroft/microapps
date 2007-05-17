@@ -28,12 +28,13 @@ even the end with adding, for example, delete functionality, when all I want to 
 set the rights required to delete.
 
 ---------WITH EXAMPLE MODEL.PY------
-class PerformedTest(History):
-    #History is an InheritableSQLObject also defined
-    x = IntCol()
-    y = IntCol()
-    testDetails = UnicodeCol(length=255)
-    testNumber = IntCol()
+class Course(SQLObject):
+    name = UnicodeCol(length=255)
+    maxStudentsAllowed = IntCol()
+
+class CourseSession(SQLObject):
+    date = DateTimeCol()
+    course = ForeignKey('Course')
 
 #class User is the default from TG
 
@@ -42,19 +43,26 @@ class PerformedTest(History):
 from restresource import *
 from restresource.crud import *
 
-class TestController(CrudController,RESTResource):
+#Hello World example
+class CourseController(CrudController,RESTResource):
     #This is all that's really necessary!
     #'crud' is a magic word.  You must use 'crud' as the variable
-    crud = SOController(PerformedTest)
+    crud = SOController(Course)
 
-#here we set the security without changing the templates, etc.
-class UserController(CrudController,RESTResource):
-    crud = SOController(User)
-    crud.create = identity.require(identity.in_any_group('class_account','professor'))(crud.create)
+#Just add security (without changing templates or validation)
+class SessionController(CrudController,RESTResource):
+    crud = SOController(CourseSession)
+
+    crud.create = identity.require(identity.in_any_group('professor'))(crud.create)
     crud.read = identity.require(identity.not_anonymous())(crud.read)
 
-    crud.update = identity.require(identity.has_permission('modify'))(crud.update)
-    crud.delete = identity.require(identity.has_permission('modify'))(crud.delete)
+    crud.update = identity.require(identity.has_permission('modify_course'))(crud.update)
+    crud.delete = identity.require(identity.has_permission('modify_course'))(crud.delete)
+
+
+#here we want to change the template and modify a form field
+class UserController(CrudController,RESTResource):
+    crud = SOController(User)
 
     #replacing the template
     #you could also replace the whole function here, if desired.
@@ -63,14 +71,40 @@ class UserController(CrudController,RESTResource):
         return self.crud.read(self, *p,**kw)
     read.expose_resource = True
 
-    
-class Root(controllers.RootController):
+    #since the password is a text field, it defaults to a textfield
+    #but we just want to tweak that one field without the rest of the form
+    def initfields(self,action,field_dict):
+        #param @action is either 'create' or 'update' --these forms can be different, if necessary
+        #param field_dict is a dictionary of FormFields from WidgetsList
+        field_dict['password'] = PasswordField(name='password',)
+        return field_dict 
 
+    
+class Root(RESTResource,controllers.RootController):
+    #we subclass Root from RESTResource to allow for ';' urls
+    #like /course;add_form
+    
     user = UserController()
-    test = TestController()
+    course = CourseController()
+    #RESTResource allows us to either add sub-controller objects to REST_children
+    #             OR just objects on the parent controller
+    #CrudController will automatically associate the CourseSession object with
+    #               the parent course (it tries to match foreign key fields with
+    #               any parents)
+    course.session = SessionController()
 
 --- Features ---
 * Supports SQLObject inheritance
+
+---ISSUES---
+These are issues that have been solved by certain patterns, but I keep
+them here as a warning for hackers that would like to rearrange the furniture
+* crud functions should return table, but validation,etc wants it to be text
+* crud functions decorated by security will have validation inside security
+* CrudController can't have the decorators for model_form since it's not
+  available when people redeclare the methods
+* validate decorator must decorate the same function as error_handler decorator
+  otherwise validate doesn't find it
 
 ----TODO ----
 * Not all Column types are supported.  I'm adding them as I encounter them
@@ -87,8 +121,16 @@ class Root(controllers.RootController):
   cherrypy would remove this issue (e.g. exposed functions being a separate set() on the Controller
                                     class, perhaps)
 
-
 """
+
+def error_response(o):
+    """if o is a string then it's an error response
+    utility function to return errors from a sub-call to validate/error_handler
+    decorated function 
+    """
+    if not isinstance(o, str):
+        return False
+    return o
 
 #GLUE SQLObject and Widgets/Validators
 def _soc_default_SOUnicodeCol(f):
@@ -159,97 +201,85 @@ class SOController:
 
     """
     soClass = None
-    model_form = lambda self: self.crud._get_form()
-    _soc_model_form = None
+
+    #getform(action) is a function defined on the parent
+    validate_create_form = lambda self: self.getform('create')
+    validate_update_form = lambda self: self.getform('update')
 
     def __init__(self,soClass):
         self.soClass = soClass
         
-    #these get instantiated by _get_form()
-    #they do NOT get instantiated on an SOController() instantiation
-    def form_fields(self):
+    #UTILITY FUNCTIONS
+    @staticmethod
+    def parentValues(self):
+        """return SQLObject dict of """
+        kw = dict()
+        parentDict = dict([(p.sqlmeta.table, p.id) for p in self.parents])
+        for c,t in _soc_getColumns(self.crud.soClass).items():
+            if type(t)==sqlobject.col.SOForeignKey and t.foreignKey.lower() in parentDict:
+                kw[c] = parentDict[t.foreignKey.lower()]
+        return kw
+
+
+    #FORM FUNCTIONS
+    def field_widgets(self):
         """return a dictionary of fields from self.soClass to build the FormFields
-        Widget object.  This should be overridden if your form does not directly
-        correspond to the SQLObject columns list.
+        Widget object.
         """
         field_dict=dict()
-
         for f,fclass in _soc_getColumns(self.soClass).items():
             field_dict[f]= _soc_table_so_mapper[type(fclass)](f)
-
         return field_dict
     
-    def form(self,form_cls):
-        #override at will
-        pass
-
-    def _get_form(self):
-        if self._soc_model_form is not None:
-            return self._soc_model_form
-
-        #we have to sneak around WidgetsList's 'syntactic sugar' class declaration here
-        FormFields = type('FormFields', (WidgetsList,), self.form_fields())
-        class Form(TableForm):
-            #__metaclass__ = _Form
-            pass
-
-        #problem: what if you don't want to inherit from WidgetsList?
-        #it's tempting to put these classes right in SOController
-        #classes FormFields and Form would go here
-        
-        #local decorators
-        #self.form_fields(FormFields)
-        self.form(Form)
-        fields = FormFields()
-
-        self._soc_model_form = Form(fields=fields, action="./")
-
-        return self._soc_model_form
-
     @staticmethod
     def edit_form(self, table, tg_errors=None, **kwargs):
         return dict(record = table,
-                    record_dict = _soc_2_dict(table), #_soc_getColumns(type(table)).keys(),
+                    record_dict = _soc_2_dict(table), 
                     columns=_soc_getColumns(self.crud.soClass).keys(),
-                    form = self.crud._get_form(),
-                    error=tg_errors,
+                    form = self.getform('update'),
+                    tg_errors=tg_errors,
                     )
 
     @staticmethod
     def add_form(self, tg_errors=None, **kwargs):
-        return dict(form = self.crud._get_form(),
+        #adding tg_errors=None makes it an implicit error handler
+        return dict(form = self.getform('create'),
                     columns=_soc_getColumns(self.crud.soClass).keys(),
-                    error=tg_errors,
+                    tg_errors=tg_errors,
                     )
 
-    def _update_error(self, *pargs, **kwargs):
-        #magically, 'self' is CrudController here
-        #don't ask me why! ask error_handler!
+    def update_error(self, *pargs, **kwargs):
+        #self is CrudController instance, confusingly
         return self.get_edit_form(*pargs, **kwargs)
 
-    def _create_error(self, *pargs, **kwargs):
-        #magically, 'self' is CrudController here
-        #don't ask me why! ask error_handler!
+    def create_error(self, *pargs, **kwargs):
+        #self is CrudController instance, confusingly
         return self.get_add_form(**kwargs)
 
     @staticmethod
-    @validate(form=model_form)
-    @error_handler(_create_error)
-    def create(self, table, **kw):
-        #parents may provide foreignKey values
-        if len(self.parents) > 0:
-            #update %kw from parents higher up in URL
-            parentDict = dict([(p.sqlmeta.table, p.id) for p in self.parents])
-            for c,t in _soc_getColumns(self.crud.soClass).items():
-                if type(t)==sqlobject.col.SOForeignKey and t.foreignKey.lower() in parentDict:
-                    kw[c] = parentDict[t.foreignKey.lower()]
+    @validate(form=validate_create_form)
+    @error_handler(create_error)
+    def create_validation(self,**kw):
+        return kw
 
+    @staticmethod
+    @validate(form=validate_update_form)
+    @error_handler(update_error)
+    def update_validation(self,table,**kw):
+        return kw
+
+    #MAIN CRUD FUNCTIONS
+    @staticmethod
+    def create(self, table, **kw):
+        if len(self.parents) > 0:
+            #update %kw with parents higher up in URL with foreignKey values
+            kw.update(self.crud.parentValues(self))
         if table is None:
             table = self.crud.soClass(**kw)
         else:
             table.set(**kw)
         table._connection.commit()
-        return "ok"
+        return table
 
     @staticmethod
     def read(self,table,**kw):
@@ -258,38 +288,27 @@ class SOController:
                     ) #_soc_2_dict(table),i=table)
 
     @staticmethod
-    @validate(form=model_form)
-    @error_handler(_update_error)
     def update(self,table,**kw):
-        if table is None:
-            table = self.crud.soClass(**kw)
-        else:
-            table.set(**kw)
+        table.set(**kw)
         table._connection.commit()
-        return "ok"
+        return table
     
     @staticmethod
     def delete(self,table):
         table.destroySelf()
-        return "ok"
+        return table
 
     @staticmethod
     def list(self, **kw):
         """what is called for /foo instead of /foo/2 """
-        #if cherrypy.request.method == 'POST':
-        #    return self.create(None,**kw)
-        #if 'add_form' in kw:
-        #    return self.add_form(**kw)
-
         return self.search(**kw)
-     
+    
     @staticmethod
     def search(self, **kw):
-        results = iter(self.crud.soClass.selectBy(**kw))
-        def dict_records():
-            for r in results:
-                yield _soc_2_dict(r)
-        return dict(members=[r for r in results] ,#list(dict_records()),
+        #update %kw with parents higher up in URL with foreignKey values
+        kw.update(self.crud.parentValues(self))
+        results = list(self.crud.soClass.selectBy(**kw))
+        return dict(members=results ,
                     columns=_soc_getColumns(self.crud.soClass).keys())
 
 
@@ -303,6 +322,51 @@ class CrudController:
     When overriding these methods, you will often just copy this version
     to get started.
     """
+
+    #one form per action (create,update), so they can be different
+    #worst case, it's one duplicate
+    #set it in getform() so _form isn't attached to the class
+    #_form = dict()
+    
+
+    #override if you want to inherit from a different Widgets structure
+    FormFields = WidgetsList
+    Form = TableForm
+
+    def initfields(self,action,field_dict):
+        """can add/delete/modify the fields in fielddict from defaults
+           before returning the modified field_dict object
+           param @action is 'create' or 'update'
+        """
+        return field_dict
+
+
+    #problem: what if you don't want to inherit from WidgetsList?
+    #it's tempting to put these classes right in SOController
+    #classes FormFields and Form would go here
+    def initform(self,action):
+        #we have to sneak around WidgetsList's 'syntactic sugar'
+        #class declaration here with initfields' dictionary
+        #before the superclass init gets called
+        FormFields = type('FormFields',
+                          (self.FormFields,),
+                          self.initfields(action,
+                                          self.crud.field_widgets())
+                          )
+        Form = self.Form
+        fields = FormFields()
+        #if Form needs to get instantiated with more arguments, we'd
+        #prolly make another function like initfields() to get
+        #a **kw dict include here
+        return Form(fields=fields)
+        
+    def getform(self, action):
+        if not hasattr(self,'_form'):
+            self._form = dict()
+        if action not in self._form:
+            self._form[action] = self.initform(action)
+        return self._form[action]
+
     def REST_instantiate(self, id, **kwargs):
         try:
             #user = self.parents[0]
@@ -315,38 +379,26 @@ class CrudController:
            (e.g. from parent controllers perhaps)"""
         return None
 
-    @expose(template='kid:restresource.templates.add')
-    def get_add_form(self, **kw):
-        return self.crud.add_form(self,**kw)
+
+    @expose(template='kid:restresource.templates.view')
+    @expose(template='json', accept_format='text/javascript')
+    def read(self,table,**kw):
+        return self.crud.read(self,table,**kw)
+    read.expose_resource = True
 
     @expose(template='kid:restresource.templates.edit')
     def get_edit_form(self, table, **kw):
         return self.crud.edit_form(self,table,**kw)
     get_edit_form.expose_resource = True
 
-    @expose(template='kid:restresource.templates.view')
+    @expose(template='kid:restresource.templates.add')
+    def get_add_form(self, **kw):
+        return self.crud.add_form(self,**kw)
+
+    @expose(template='kid:restresource.templates.list')
     @expose(template='json', accept_format='text/javascript')
-    def read(self,table,**kw):
-        if 'edit_form' in kw:
-            return self.edit_form(table, **kw)
-        return self.crud.read(self,table,**kw)
-    read.expose_resource = True
-
-    def post(self,**kw):
-        """when a post goes directly to /col/"""
-        return self.crud.create(self,self.REST_create(**kw),**kw)
-
-    def create(self,table,**kw):
-        return self.crud.create(self,table,**kw)
-    create.expose_resource = True
-
-    def delete(self,table,**kw):
-        return self.crud.delete(self,table,**kw)
-    delete.expose_resource = True
-
-    def update(self,table,**kw):
-        return self.crud.update(self,table,**kw)
-    update.expose_resource = True
+    def list(self,*p,**kw):
+        return self.crud.list(self,*p,**kw)
 
     @expose(template='kid:restresource.templates.list')
     @expose(template='json', accept_format='text/javascript')
@@ -354,9 +406,26 @@ class CrudController:
         return self.crud.search(self,*p,**kw)
     search.expose_resource = True
 
-    def list(self,*p,**kw):
-        return self.crud.list(self,*p,**kw)
-    list.expose_resource = True
+    def post(self,**kw):
+        """when a POST goes directly to /col/"""
+        return self.create(self.REST_create(**kw),**kw)
+    post.exposed = True
 
+    def create(self,table,**kw):
+        kw = self.crud.create_validation(self,**kw)
+        return error_response(kw) \
+               or error_response(self.crud.create(self,table,**kw)) \
+               or "ok"
+    create.expose_resource = True
 
-    
+    def update(self,table,**kw):
+        kw = self.crud.update_validation(self,table,**kw)
+        return error_response(kw) \
+               or error_response(self.crud.update(self,table,**kw)) \
+               or "ok"
+    update.expose_resource = True
+
+    #should there be an error_handler default here?
+    def delete(self,table,**kw):
+        return error_response(self.crud.delete(self,table,**kw)) or "ok"
+    delete.expose_resource = True

@@ -11,3 +11,11 @@
 * crud defaults for Turbogears with a SQLObject bridge
 * added ';' support a la wsgicollection:
   http://bitworking.org/news/wsgicollection
+
+0.3
+* fixed ';' support for more corner cases
+* REST_ids_are_root = True|False option for different ';' url schemes
+  (Are ids or attributes the resource parameters after the ';'?)
+* crud rearranged and simplified for easier form-fields modification
+* collections and resources now redirect to include '/' for
+  better consistancy on relative-url form submission
