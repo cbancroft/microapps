@@ -67,9 +67,9 @@ class UserController(RESTResource):
         return "ok"
     create.expose_resource = True
 
-    def extra_action(self,user):
+    def get_extra_action(self,user):
         # do something else
-    extra_action.expose_resource = True
+    get_extra_action.expose_resource = True
 
     def REST_instantiate(self, username, **kwargs):
         try:
@@ -87,12 +87,24 @@ then, the site would have urls like:
     /user/bob/posts/my-second-post
     /user/bob/extra_action
 
-which represent REST resources. calling 'GET /usr/bob' would call the read() method on UserController
-for the user bob. 'PUT /usr/joe' would create a new user with username 'joe'. 'DELETE /usr/joe'
-would delete that user. 'GET /usr/bob/posts/my-first-post' would call read() on the Post Controller
+which represent REST resources. calling 'GET /user/bob' would call the read() method on UserController
+for the user bob. 'PUT /user/joe' would create a new user with username 'joe'. 'DELETE /user/joe'
+would delete that user. 'GET /user/bob/posts/my-first-post' would call read() on the Post Controller
 with the post with the slug 'my-first-post' that is owned by bob.
 
+There are actually two URL scheme options.  Note that the first corresponds to the scheme above, as well.
+Scheme One (default) --this follows 'WSGI Collection' semicolon rules
+    REST_ids_are_root = True
+    /user/bob;extra_action OR /user/bob/extra_action
 
+Scheme Two:
+    If you put the following in your RESTResource class:
+    REST_ids_are_root = False
+    /user;bob/extra_action OR /user/;bob/extra_action
+
+    This has the advantage of making both the collection and the members 'context'
+    resources, meantin at /user;bob/ you can send a relative-url for 'extra_action'
+    and it will go to the expected location.
 """
 
 import cherrypy

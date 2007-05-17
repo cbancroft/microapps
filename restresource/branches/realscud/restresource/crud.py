@@ -28,12 +28,13 @@ even the end with adding, for example, delete functionality, when all I want to 
 set the rights required to delete.
 
 ---------WITH EXAMPLE MODEL.PY------
-class PerformedTest(History):
-    #History is an InheritableSQLObject also defined
-    x = IntCol()
-    y = IntCol()
-    testDetails = UnicodeCol(length=255)
-    testNumber = IntCol()
+class Course(SQLObject):
+    name = UnicodeCol(length=255)
+    maxStudentsAllowed = IntCol()
+
+class CourseSession(SQLObject):
+    date = DateTimeCol()
+    course = ForeignKey('Course')
 
 #class User is the default from TG
 
@@ -42,19 +43,26 @@ class PerformedTest(History):
 from restresource import *
 from restresource.crud import *
 
-class TestController(CrudController,RESTResource):
+#Hello World example
+class CourseController(CrudController,RESTResource):
     #This is all that's really necessary!
     #'crud' is a magic word.  You must use 'crud' as the variable
-    crud = SOController(PerformedTest)
+    crud = SOController(Course)
 
-#here we set the security without changing the templates, etc.
-class UserController(CrudController,RESTResource):
-    crud = SOController(User)
-    crud.create = identity.require(identity.in_any_group('class_account','professor'))(crud.create)
+#Just add security (without changing templates or validation)
+class SessionController(CrudController,RESTResource):
+    crud = SOController(CourseSession)
+
+    crud.create = identity.require(identity.in_any_group('professor'))(crud.create)
     crud.read = identity.require(identity.not_anonymous())(crud.read)
 
-    crud.update = identity.require(identity.has_permission('modify'))(crud.update)
-    crud.delete = identity.require(identity.has_permission('modify'))(crud.delete)
+    crud.update = identity.require(identity.has_permission('modify_course'))(crud.update)
+    crud.delete = identity.require(identity.has_permission('modify_course'))(crud.delete)
+
+
+#here we want to change the template and modify a form field
+class UserController(CrudController,RESTResource):
+    crud = SOController(User)
 
     #replacing the template
     #you could also replace the whole function here, if desired.
@@ -63,21 +71,40 @@ class UserController(CrudController,RESTResource):
         return self.crud.read(self, *p,**kw)
     read.expose_resource = True
 
-    
-class Root(controllers.RootController):
+    #since the password is a text field, it defaults to a textfield
+    #but we just want to tweak that one field without the rest of the form
+    def initfields(self,action,field_dict):
+        #param @action is either 'create' or 'update' --these forms can be different, if necessary
+        #param field_dict is a dictionary of FormFields from WidgetsList
+        field_dict['password'] = PasswordField(name='password',)
+        return field_dict 
 
+    
+class Root(RESTResource,controllers.RootController):
+    #we subclass Root from RESTResource to allow for ';' urls
+    #like /course;add_form
+    
     user = UserController()
-    test = TestController()
+    course = CourseController()
+    #RESTResource allows us to either add sub-controller objects to REST_children
+    #             OR just objects on the parent controller
+    #CrudController will automatically associate the CourseSession object with
+    #               the parent course (it tries to match foreign key fields with
+    #               any parents)
+    course.session = SessionController()
 
 --- Features ---
 * Supports SQLObject inheritance
 
 ---ISSUES---
+These are issues that have been solved by certain patterns, but I keep
+them here as a warning for hackers that would like to rearrange the furniture
 * crud functions should return table, but validation,etc wants it to be text
 * crud functions decorated by security will have validation inside security
 * CrudController can't have the decorators for model_form since it's not
   available when people redeclare the methods
-* validate decorator must pair with error_handler decorator
+* validate decorator must decorate the same function as error_handler decorator
+  otherwise validate doesn't find it
 
 ----TODO ----
 * Not all Column types are supported.  I'm adding them as I encounter them
@@ -93,7 +120,6 @@ class Root(controllers.RootController):
   other security/validation decorators, we can wonder whether some modification to
   cherrypy would remove this issue (e.g. exposed functions being a separate set() on the Controller
                                     class, perhaps)
-
 
 """
 
