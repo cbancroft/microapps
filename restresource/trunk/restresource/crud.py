@@ -114,7 +114,22 @@ them here as a warning for hackers that would like to rearrange the furniture
   (that's the whole point).  If they are class methods (instead of staticmethods), then
   they can only be overridden by subclassing.  Thus, they're all static methods, assuming
   they're called from something inheriting from CRUDController, able to 'find itself' at
-  self.crud
+  self.crud.  For more elaboration on why we need staticmethods, we observe the following:
+
+>>> class Foo:
+...     def bar(self,x):
+...         return x*3
+...
+>>> class Baz:
+...     foo = Foo()
+...     #what some TG decorators do:
+...     foo.bar.expose = True
+...
+Traceback (most recent call last):
+  File "<stdin>", line 1, in ?
+  File "<stdin>", line 4, in Baz
+AttributeError: 'instancemethod' object has no attribute 'expose'
+
 
 * Since the chief point of this library is to separate the @expose decorator from the
   other security/validation decorators, we can wonder whether some modification to
