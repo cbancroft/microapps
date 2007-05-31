@@ -149,25 +149,29 @@ def error_response(o):
 
 #GLUE SQLObject and Widgets/Validators
 def _soc_default_SOUnicodeCol(f):
-    return TextField(name=f,)
+    return {f:TextField(name=f,)}
 
 def _soc_default_SODateCol(f):
-    return CalendarDatePicker(name=f, validator=validators.DateConverter())
+    return {f:CalendarDatePicker(name=f, validator=validators.DateConverter())}
 
 def _soc_default_SODateTimeCol(f):
-    return CalendarDateTimePicker(name=f, validator=validators.DateTimeConverter())
+    return {f:CalendarDateTimePicker(name=f, validator=validators.DateTimeConverter())}
 
 def _soc_default_SOForeignKey(f):
-    return HiddenField(name=f,)
+    # this is a likely candidate for being overridden per field
+    # for instance some possibilities:
+    # {f:HiddenField(name=f,)}
+    # {f:SingleSelectField(name=f,....)}
+    return {}
 
 def _soc_default_SOBoolCol(f):
-    return CheckBox(name=f,)
+    return {f:CheckBox(name=f,)}
 
 def _soc_default_SOIntCol(f):
-    return TextField(name=f, validator=validators.Int())
+    return {f:TextField(name=f, validator=validators.Int())}
 
 def _soc_default_Number(f):
-    return TextField(name=f, validator=validators.Number())
+    return {f:TextField(name=f, validator=validators.Number())}
 
 #turbogears manual: widgets: p316,320, SOcolumns: p46
 _soc_table_so_mapper = dict( [
@@ -243,13 +247,13 @@ class SOController:
         """
         field_dict=dict()
         for f,fclass in _soc_getColumns(self.soClass).items():
-            field_dict[f]= _soc_table_so_mapper[type(fclass)](f)
+            field_dict.update(_soc_table_so_mapper[type(fclass)](f))
         return field_dict
     
     @staticmethod
     def edit_form(self, table, tg_errors=None, **kwargs):
         return dict(record = table,
-                    record_dict = _soc_2_dict(table), 
+                    record_dict = _soc_2_dict(table),
                     columns=_soc_getColumns(self.crud.soClass).keys(),
                     form = self.getform('update'),
                     tg_errors=tg_errors,
