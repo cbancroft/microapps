@@ -269,10 +269,12 @@ class SOController:
 
     def update_error(self, *pargs, **kwargs):
         #self is CrudController instance, confusingly
+        cherrypy.response.status = 400
         return self.get_edit_form(*pargs, **kwargs)
 
     def create_error(self, *pargs, **kwargs):
         #self is CrudController instance, confusingly
+        cherrypy.response.status = 400
         return self.get_add_form(**kwargs)
 
     @staticmethod
