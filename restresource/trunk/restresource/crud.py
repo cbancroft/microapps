@@ -317,6 +317,7 @@ class SOController:
     @staticmethod
     def delete(self,table):
         table.destroySelf()
+        table._connection.commit()
         return table
 
     @staticmethod
