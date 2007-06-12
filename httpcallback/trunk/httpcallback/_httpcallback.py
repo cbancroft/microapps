@@ -1,7 +1,7 @@
 """
-Reference Implementation of JSONRequest
+Reference Implementation of HTTPCallback
 
-see http://microapps.org/JSONRequest
+see http://microapps.org/HTTPCallback
 """
 
 # TODO:
@@ -11,11 +11,11 @@ see http://microapps.org/JSONRequest
 from simplejson import loads, dumps
 import urllib, sys, cStringIO, re
 
-class JSONRequest(object):
+class HTTPCallback(object):
     """
-    Instantiate a basic JSONRequest object:
+    Instantiate a basic HTTPCallback object:
     
-    >>> jr = JSONRequest(url="http://www.example.com/")
+    >>> jr = HTTPCallback(url="http://www.example.com/")
     >>> jr.url
     'http://www.example.com/'
 
@@ -53,7 +53,7 @@ class JSONRequest(object):
     >>> jr.follow_all_redirects
     False
 
-    version defaults to "0.1" (JSONRequest's current version)
+    version defaults to "0.1" (HTTPCallback's current version)
     >>> jr.version
     '0.1'
 
@@ -71,13 +71,13 @@ class JSONRequest(object):
         'body' and that takes precedent. 'sendContent' is allowed for compatability with
         mochikit's XHR objects but will be lost if body is specified as well. 
 
-        >>> jr = JSONRequest(url="http://www.example.com/",body="foo")
+        >>> jr = HTTPCallback(url="http://www.example.com/",body="foo")
         >>> jr.body
         'foo'
-        >>> jr = JSONRequest(url="http://www.example.com/",sendContent="foo")
+        >>> jr = HTTPCallback(url="http://www.example.com/",sendContent="foo")
         >>> jr.body
         'foo'
-        >>> jr = JSONRequest(url="http://www.example.com/",body="foo",sendContent="bar")
+        >>> jr = HTTPCallback(url="http://www.example.com/",body="foo",sendContent="bar")
         >>> jr.body
         'bar'
 
@@ -94,10 +94,10 @@ class JSONRequest(object):
         Headers may be specified either as a list of 2-arrays (or tuples), or as a dictionary. If passed
         as a dictionary, they will be normalized to a list or lists. 
 
-        >>> jr = JSONRequest(url="http://www.example.com/",headers=[["content-type","text/html"],["x-foo","foo"]])
+        >>> jr = HTTPCallback(url="http://www.example.com/",headers=[["content-type","text/html"],["x-foo","foo"]])
         >>> jr.headers
         [['content-type','text/html'],['x-foo','foo']]
-        >>> jr = JSONRequest(url="http://www.example.com/",headers={"content-type" : "text/html", "x-foo" : "foo"})
+        >>> jr = HTTPCallback(url="http://www.example.com/",headers={"content-type" : "text/html", "x-foo" : "foo"})
         >>> jr.headers.length
         2
         >>> ['content-type','text/html'] in jr.headers
@@ -107,7 +107,7 @@ class JSONRequest(object):
 
         tuples are allowed too but get converted to lists automatically:
         
-        >>> jr = JSONRequest(url="http://www.example.com/",headers=[("content-type","text/html"),("x-foo","foo")])
+        >>> jr = HTTPCallback(url="http://www.example.com/",headers=[("content-type","text/html"),("x-foo","foo")])
         >>> jr.headers
         [['content-type','text/html'],['x-foo','foo']]
 
@@ -125,13 +125,13 @@ class JSONRequest(object):
         key, which will be lost in a dictionary. So if you're passing in a dictionary, make sure there's no
         chance of that happening.
 
-        >>> jr = JSONRequest(url="http://www.example.com/",params=[["firstname","anders"],["lastname" : "pearson"]])
+        >>> jr = HTTPCallback(url="http://www.example.com/",params=[["firstname","anders"],["lastname" : "pearson"]])
         >>> jr.params
         [['firstname','anders'],['lastname' : 'pearson']]
-        >>> jr = JSONRequest(url="http://www.example.com/",params=[("firstname","anders"),("lastname" : "pearson")])
+        >>> jr = HTTPCallback(url="http://www.example.com/",params=[("firstname","anders"),("lastname" : "pearson")])
         >>> jr.params
         [['firstname','anders'],['lastname' : 'pearson']]
-        >>> jr = JSONRequest(url="http://www.example.com/",params=dict(firstname="anders",lastname="pearson"))
+        >>> jr = HTTPCallback(url="http://www.example.com/",params=dict(firstname="anders",lastname="pearson"))
         >>> jr.params.length
         2
         >>> ['firstname','anders'] in jr.params
@@ -145,15 +145,15 @@ class JSONRequest(object):
         self.params               = [list(t) for t in params]
 
         """
-        JSONRequest does a certain amount of normalization as well, automatically extracting
+        HTTPCallback does a certain amount of normalization as well, automatically extracting
         any querystring from the url (and adding it to the queryString if that's also specified).
 
-        >>> jr = JSONRequest(url="http://www.example.com/foo?a=b")
+        >>> jr = HTTPCallback(url="http://www.example.com/foo?a=b")
         >>> jr.url
         'http://www.example.com/foo'
         >>> jr.queryString
         'a=b'
-        >>> jr = JSONRequest(url="http://www.example.com/foo?a=b",queryString="c=d")
+        >>> jr = HTTPCallback(url="http://www.example.com/foo?a=b",queryString="c=d")
         >>> jr.url
         'http://www.example.com/foo'
         >>> jr.queryString
@@ -177,9 +177,9 @@ class JSONRequest(object):
 
     @classmethod
     def from_dict(cls,d={}):
-        """ create a JSONRequest object from a dictionary
+        """ create a HTTPCallback object from a dictionary
 
-        >>> jr = JSONRequest.from_dict(dict(url="http://www.example.com/"))
+        >>> jr = HTTPCallback.from_dict(dict(url="http://www.example.com/"))
         >>> jr.url
         'http://www.example.com/'
         >>> jr.method
@@ -188,7 +188,7 @@ class JSONRequest(object):
 
         I guess this method is slightly superfluous since you could really just do
 
-        >>> jr = JSONRequest(**dict(url="http://www.example.com/"))
+        >>> jr = HTTPCallback(**dict(url="http://www.example.com/"))
         >>> jr.url
         'http://www.example.com/'
 
@@ -207,9 +207,9 @@ class JSONRequest(object):
 
     @classmethod
     def from_json(cls,json=""):
-        """ create a JSONRequest object from a json string
+        """ create a HTTPCallback object from a json string
 
-        >>> jr = JSONRequest.from_json("{\\"url\\" : \\"http://www.example.com/\\"}")
+        >>> jr = HTTPCallback.from_json("{\\"url\\" : \\"http://www.example.com/\\"}")
         >>> jr.url
         u'http://www.example.com/'
         >>> jr.method
@@ -234,7 +234,7 @@ class JSONRequest(object):
     def as_dict(self):
         """ returns a dict of the request
 
-        >>> jr = JSONRequest(url="http://www.example.com/")
+        >>> jr = HTTPCallback(url="http://www.example.com/")
         >>> jr.as_dict() == dict(url="http://www.example.com/",method="GET",body="",
         ...                      queryString="",username="",password="",headers=[],
         ...                      params=[], redirections=5,follow_all_redirects=False,
@@ -261,9 +261,9 @@ class JSONRequest(object):
                     version=self.version,kwargs=self.kwargs)
         
     def as_json(self):
-        """ return a JSON object of the JSONRequest
+        """ return a JSON object of the HTTPCallback
         
-        >>> jr = JSONRequest(url="http://www.example.com/")
+        >>> jr = HTTPCallback(url="http://www.example.com/")
         >>> jr.as_json()
         '{"username": "", "body": "", "headers": [], "url": "http:\\\/\\\/www.example.com\\\/", "queryString": "", "redirections": 5, "version": "0.1", "params": [], "follow_all_redirects": false, "kwargs": {}, "password": "", "method": "GET"}'
 
@@ -273,12 +273,12 @@ class JSONRequest(object):
     def as_wsgi_environ(self):
         """ return a wsgi environ dict of the request
 
-        To make it easier to bridge HTTP and WSGI, a JSONRequest
+        To make it easier to bridge HTTP and WSGI, a HTTPCallback
         can be converted to a wsgi environ dictionary
         (see http://www.python.org/dev/peps/pep-0333/#environ-variables)
         suitable to pass to a WSGI application.
 
-        >>> jr = JSONRequest(url="http://www.example.com/")
+        >>> jr = HTTPCallback(url="http://www.example.com/")
         >>> environ = jr.as_wsgi_environ()
         >>> environ['REQUEST_METHOD']
         'GET'
@@ -383,7 +383,7 @@ class JSONRequest(object):
         """ returns the JSON version serialized into a urlencoded string, ready to put in
         a url or in a form-data/x-www-urlencoded request body. 
 
-        >>> jr = JSONRequest(url="http://www.example.com/")
+        >>> jr = HTTPCallback(url="http://www.example.com/")
         >>> jr.as_urlencoded_json()
         '%7B%22username%22%3A%20%22%22%2C%20%22body%22%3A%20%22%22%2C%20%22headers%22%3A%20%5B%5D%2C%20%22url%22%3A%20%22http%3A%5C/%5C/www.example.com%5C/%22%2C%20%22queryString%22%3A%20%22%22%2C%20%22redirections%22%3A%205%2C%20%22version%22%3A%20%220.1%22%2C%20%22params%22%3A%20%5B%5D%2C%20%22follow_all_redirects%22%3A%20false%2C%20%22kwargs%22%3A%20%7B%7D%2C%20%22password%22%3A%20%22%22%2C%20%22method%22%3A%20%22GET%22%7D'
         """
@@ -401,7 +401,7 @@ class JSONRequest(object):
         ...      '20' : 'this-is-spinal-tap', 'a~b' : 'none%20of%20the%20above',
         ...      'schema' : 'https', 'p' : 'quote=to+bo+or+not+to+be',
         ...      'e' : '','q' : 'hullo#world'}
-        >>> jr = JSONRequest(url="http://example.org/{a}/{b}/")
+        >>> jr = HTTPCallback(url="http://example.org/{a}/{b}/")
         >>> jr.template_substitute(d); jr.url
         'http://example.org/fred/barney/'
         >>> jr.url = "http://example.org/{a}{b}/"; jr.template_substitute(d); jr.url
