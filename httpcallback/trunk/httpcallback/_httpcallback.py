@@ -63,7 +63,11 @@ class HTTPCallback(object):
 
     """
     def __init__(self,url="",method="GET",sendContent="",body="",queryString="",username="",password="",
-                 headers=[],params=[],redirections=5,follow_all_redirects=False,version="0.1",**kwargs):
+                 headers=None,params=None,redirections=5,follow_all_redirects=False,version="0.1",**kwargs):
+        if headers is None:
+            headers = []
+        if params is None:
+            params = []
         self.url                  = url
         self.method               = method
 
@@ -176,7 +180,7 @@ class HTTPCallback(object):
 
 
     @classmethod
-    def from_dict(cls,d={}):
+    def from_dict(cls,d=None):
         """ create a HTTPCallback object from a dictionary
 
         >>> jr = HTTPCallback.from_dict(dict(url="http://www.example.com/"))
@@ -196,7 +200,8 @@ class HTTPCallback(object):
         To get the same effect.
         
         """
-        
+        if d is None:
+            d = {}
         
         return cls(url=d.get('url',''),method=d.get('method','GET'),
                    body=d.get('body',''),sendContent=d.get('sendContent'),
@@ -391,7 +396,7 @@ class HTTPCallback(object):
         
         return urllib.quote(self.as_json())
 
-    def template_substitute(self,d={}):
+    def template_substitute(self,d=None):
         """ basic URI Templating. substitutes values from the dictionary into template variables in the url
 
         see: http://bitworking.org/projects/URI-Templates/
@@ -423,6 +428,8 @@ class HTTPCallback(object):
         'http://example.com//'
 
         """
+        if d is None:
+            d = {}
 
         for key,value in d.iteritems():
             template = "{%s}" % key
