@@ -439,6 +439,15 @@ class HTTPCallback(object):
 
         self.url = re.sub(r"(\{[^\}]*\})","",self.url)
 
+    def execute(self,async=False,resp=True):
+        """ uses restclient to execute the callback. see restclient.rest_invoke() for docs
+        on the params """
+        import restclient
+        if restclient.__version__ >= "0.9.9":
+            return restclient.rest_invoke(httpcallback=self,async=async,resp=resp)
+        else:
+            print "need a newer version of restclient"
+            return None
 
 def _test():
     import doctest
