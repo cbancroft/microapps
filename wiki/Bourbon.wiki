@@ -19,6 +19,7 @@ methods are then accessible via HTTP.
   * JSON loading and rendering
   * automatic transaction support
   * strict adherence to [http://www.faqs.org/rfcs/rfc2616.html rfc2616] (HTTP 1.1)
+  * etag and if-modified-since support
   * nested structures
   * [http://pythonpaste.org/ paste] deployment with .ini config files
   * paste template for "quickstart": paster create -t bourbon myapp
@@ -248,4 +249,4 @@ with {{{self._session()}}} and {{{self._fetch(environ)}}} respectively.
 All methods are automatically wrapped in a transaction. Raising an
 exception will cause it to rollback. 
 
-
+Since this documentation's pretty incomplete but the source code is relatively short and easy to read, you'll definitely want to browse through that before attempting to use Bourbon for anything serious: http://microapps.googlecode.com/svn/bourbon/trunk/
