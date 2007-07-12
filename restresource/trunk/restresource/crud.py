@@ -186,35 +186,6 @@ _soc_table_so_mapper = dict( [
     (sqlobject.col.SOCurrencyCol,_soc_default_Number),
     ] )
 
-def _soc_getColumns(soObj):
-    columns = {}
-    for x in soObj.__mro__:
-        y = x.sqlmeta.columns.items()
-        if len(y) == 0: break
-        columns.update(y)
-    #childName is a reserved column for SO inheritance
-    if 'childName' in columns:
-        del columns['childName']
-    return columns
-
-def _soc_2_dict(soObj, **kw):
-    soDict = dict()
-    for f,v in _soc_getColumns(type(soObj)).items():
-        soDict[f]=getattr(soObj,f,None)
-        if type(v)==sqlobject.col.SOForeignKey:
-            field_sansID = f[:-2]
-            field_val = getattr(soObj,field_sansID,None)
-            if field_val is not None:
-                soDict[field_sansID] = _soc_2_dict(field_val)
-            else:
-                soDict[field_sansID] = None
-
-    soDict['id'] = soObj.id
-    for k in kw:
-        soDict[k] = kw[k]
-    return soDict
-
-
 class SOController:
     """
 
@@ -229,12 +200,40 @@ class SOController:
         self.soClass = soClass
         
     #UTILITY FUNCTIONS
+    def record_dict(self, soObj, **kw):
+        soDict = dict()
+        for f,v in self.columns().items():
+            soDict[f]=getattr(soObj,f,None)
+            if type(v)==sqlobject.col.SOForeignKey:
+                field_sansID = f[:-2]
+                field_val = getattr(soObj,field_sansID,None)
+                if field_val is not None:
+                    soDict[field_sansID] = self.record_dict(field_val)
+                else:
+                    soDict[field_sansID] = None
+
+        soDict['id'] = soObj.id
+        for k in kw:
+            soDict[k] = kw[k]
+        return soDict
+
+    def columns(self):
+        columns = {}
+        for x in self.soClass.__mro__:
+            y = x.sqlmeta.columns.items()
+            if len(y) == 0: break
+            columns.update(y)
+        #childName is a reserved column for SO inheritance
+        if 'childName' in columns:
+            del columns['childName']
+        return columns
+        
     @staticmethod
     def parentValues(self):
         """return SQLObject dict of """
         kw = dict()
         parentDict = dict([(p.sqlmeta.table, p.id) for p in self.parents])
-        for c,t in _soc_getColumns(self.crud.soClass).items():
+        for c,t in self.crud.columns().items():
             if type(t)==sqlobject.col.SOForeignKey and t.foreignKey.lower() in parentDict:
                 kw[c] = parentDict[t.foreignKey.lower()]
         return kw
@@ -246,15 +245,15 @@ class SOController:
         Widget object.
         """
         field_dict=dict()
-        for f,fclass in _soc_getColumns(self.soClass).items():
+        for f,fclass in self.columns().items():
             field_dict.update(_soc_table_so_mapper[type(fclass)](f))
         return field_dict
     
     @staticmethod
     def edit_form(self, table, tg_errors=None, **kwargs):
         return dict(record = table,
-                    record_dict = _soc_2_dict(table),
-                    columns=_soc_getColumns(self.crud.soClass).keys(),
+                    record_dict = self.crud.record_dict(table),
+                    columns=self.crud.columns().keys(),
                     form = self.getform('update'),
                     tg_errors=tg_errors,
                     )
@@ -263,7 +262,7 @@ class SOController:
     def add_form(self, tg_errors=None, **kwargs):
         #adding tg_errors=None makes it an implicit error handler
         return dict(form = self.getform('create'),
-                    columns=_soc_getColumns(self.crud.soClass).keys(),
+                    columns=self.crud.columns().keys(),
                     tg_errors=tg_errors,
                     )
 
@@ -305,8 +304,8 @@ class SOController:
     @staticmethod
     def read(self,table,**kw):
         return dict(record=table,
-                    columns=_soc_getColumns(type(table)).keys(),
-                    ) #_soc_2_dict(table),i=table)
+                    columns=self.crud.columns().keys(), 
+                    ) 
 
     @staticmethod
     def update(self,table,**kw):
@@ -331,7 +330,7 @@ class SOController:
         kw.update(self.crud.parentValues(self))
         results = list(self.crud.soClass.selectBy(**kw))
         return dict(members=results ,
-                    columns=_soc_getColumns(self.crud.soClass).keys())
+                    columns=self.crud.columns().keys())
 
 
 
