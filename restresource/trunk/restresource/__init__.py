@@ -284,7 +284,7 @@ class RESTResource:
             if self.REST_ids_are_root:
                 if rname:
                     #url like /col/id
-                    resources.append(self.getresource((rname), params))
+                    resources.append(self.getresource((rname,), params))
                     rname = None
                 if vpath:
                     (rname,rparams) = self.parse_resource_token(vpath.pop(0))
