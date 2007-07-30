@@ -1,0 +1,133 @@
+<html>
+  <head><title>Tasty Client Implementations</title>
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+
+<body>
+  <div id="page">
+  <div id="sidebar">
+    <ul>
+      <li><a href="index.html">Tasty</a></li>
+      <li><a href="changelog.html">Changelog</a></li>
+      <li><a href="requirements.html">Requirements</a></li>
+      <li><a href="installation.html">Installation</a></li>
+      <li><a href="tag_model.html">Tag Model</a></li>
+      <li><a href="rest_interface.html">REST Interface</a></li>
+      <li>Client Implementations</li>
+      <li><a href="tasty_sites.html">Sites</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+<h1>Client Implementations</h1>
+<p>Examples of client-side code for interacting with Tasty. If you have improvements on these, or
+additional examples in languages not covered here, please submit them.</p>
+
+<h2 id="commandline">commandline</h2>
+<p>
+curl is very useful for testing out ideas from the command line, particularly with its -X flag. eg,
+</p>
+<pre class="wiki">curl -X POST -d "" http://localhost:9980/service/test/user/bob/item/foo/tag/blah/
+curl -X DELETE http://localhost:9980/service/test/user/bob/item/foo/tag/blah/
+</pre><h2 id="python">python</h2>
+<div class="code-block"><pre><b><span class="code-lang">import</span></b> httplib, urllib
+<b><span class="code-lang">from</span></b> simplejson <b><span class="code-lang">import</span></b> loads as json_to_py
+
+
+
+<b><span class="code-lang">def</span></b> <b><span class="code-func">get_tags</span></b>(user,item):
+    url = <span class="code-string"><b>"http://tasty.example.com/service/myservice/user/%s/item/%s/"</b></span> % (user,item)
+    try:
+        <b><span class="code-lang">return</span></b> [t[<span class="code-string"><b>'tag'</b></span>] <b><span class="code-lang">for</span></b> t <b><span class="code-lang">in</span></b> json_to_py(urllib.urlopen(url).read())[<span class="code-string"><b>'tags'</b></span>]]
+    <b><span class="code-lang">except</span></b> json.ReadException:
+        <b><span class="code-lang">return</span></b> []
+
+
+
+<b><span class="code-lang">def</span></b> <b><span class="code-func">add_tag</span></b>(user,item,tag):
+    conn = httplib.HTTPConnection(<span class="code-string"><b>"tasty.example.com"</b></span>)
+    url = <span class="code-string"><b>"/service/myservice/user/%s/item/%s/tag/%s/"</b></span> % (user,item,tag)
+    conn.request(<span class="code-string"><b>"POST"</b></span>,url)
+    response = conn.getresponse()
+    conn.close()
+</pre></div><p>
+sometimes, adding or deleting does not need to be done synchronously. if that's the case, you can eliminate http latency from bogging you down by spawning a new thread to make the request.
+</p>
+<div class="code-block"><pre><b><span class="code-lang">from</span></b> threading <b><span class="code-lang">import</span></b> Thread
+
+
+<b><span class="code-lang">class</span></b> Putter(Thread):
+    <b><span class="code-lang">def</span></b> <b><span class="code-func">__init__</span></b>(self,url):
+        self.url = url
+    <b><span class="code-lang">def</span></b> <b><span class="code-func">run</span></b>(self):
+        conn = httplib.HTTPConnection(<span class="code-string"><b>"tasty.example.com"</b></span>)
+        conn.request(<span class="code-string"><b>"POST"</b></span>,self.url)
+        r = conn.getresponse()
+        conn.close()
+
+<b><span class="code-lang">def</span></b> <b><span class="code-func">add_tag</span></b>(user,item,tag):
+    p = Putter(<span class="code-string"><b>"/service/myservice/user/%s/item/%s/tag/%s/"</b></span> % (user,item,tag))
+    p.start()
+
+
+</pre></div><p>
+but i recommend trying it first without the thread. the performance hit of making an http request to a (presumably) local service may be surprisingly small. a Twisted implementation would probably be even faster and cleaner, but i don't really know twisted very well. sample twisted client code is welcome. 
+</p>
+<p>
+also of interest may be this sample implementation of <a href="cloud_scaling.html">cloud scaling</a>. 
+</p>
+<h2 id="perl">perl</h2>
+<div class="code-block"><pre><b><span class="code-lang">my</span></b> $TASTY_BASE = <span class="code-string"><b>"tasty.example.com"</b></span>;
+<b><span class="code-lang">my</span></b> $TASTY_SERVICE = <span class="code-string"><b>"example"</b></span>;
+
+
+
+<b><span class="code-lang">sub</span></b> tasty_get {
+    <b><span class="code-lang">use</span></b> LWP::Simple;
+    <b><span class="code-lang">use</span></b> JSON;
+    <b><span class="code-lang">my</span></b> $url = <b><span class="code-lang">shift</span></b>;
+    <b><span class="code-lang">my</span></b> $full = <span class="code-string"><b>"http://${TASTY_BASE}/service/${TASTY_SERVICE}/$url"</b></span>;
+    <b><span class="code-lang">my</span></b> $r = get $full;
+    <b><span class="code-lang">my</span></b> $json = <b><span class="code-lang">new</span></b> JSON;
+    <b><span class="code-lang">my</span></b> $obj = $json-&gt;jsonToObj($r);
+    <b><span class="code-lang">if</span></b> (!$obj) {
+        $obj = {};
+    }
+    <b><span class="code-lang">return</span></b> $obj;
+}
+
+
+
+<b><span class="code-lang">use</span></b> LWP::UserAgent;
+<b><span class="code-lang">use</span></b> HTTP::Request;
+<b><span class="code-lang">use</span></b> HTTP::Request::Common <b><span class="code-lang">qw</span></b>(POST);
+
+<b><span class="code-lang">sub</span></b> tasty_put {
+    <b><span class="code-lang">my</span></b> $url = <b><span class="code-lang">shift</span></b>;
+    <b><span class="code-lang">my</span></b> $ua = LWP::UserAgent-&gt;new;
+    <b><span class="code-lang">my</span></b> $req = POST <span class="code-string"><b>"http://${TASTY_BASE}/service/${TASTY_SERVICE}/$url"</b></span>, [];
+    <b><span class="code-lang">return</span></b> $ua-&gt;request($req)-&gt;as_string;
+}
+
+
+
+<b><span class="code-lang">sub</span></b> tasty_delete {
+    <b><span class="code-lang">my</span></b> $url = <b><span class="code-lang">shift</span></b>;
+    <b><span class="code-lang">my</span></b> $ua = LWP::UserAgent-&gt;new;
+    <b><span class="code-lang">my</span></b> $req = HTTP::Request-&gt;new(DELETE =&gt; <span class="code-string"><b>"http://${TASTY_BASE}/service/${TASTY_SERVICE}/$url"</b></span>);
+    <b><span class="code-lang">my</span></b> $res = $ua-&gt;request($req);
+}
+
+
+</pre></div><h2 id="java">java</h2>
+<p>
+TODO
+</p>
+<h2 id="PHP">PHP</h2>
+<p>
+TODO
+</p>
+<h2 id="JavaScript">JavaScript</h2>
+<p>
+TODO
+</p></div></div></body>
