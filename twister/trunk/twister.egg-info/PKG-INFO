@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: twister
+Version: 0.1dev
+Summary: Random Number Generation Microapp
+Home-page: http://code.google.com/p/microapps/wiki/Twister
+Author: Anders Pearson
+Author-email: anders@columbia.edu
+License: GPL
+Description: Generates random numbers for a number of different distributions.
+Keywords: REST random
+Platform: UNKNOWN
