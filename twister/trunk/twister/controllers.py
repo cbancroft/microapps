@@ -79,19 +79,23 @@ def error_message(start_response,message=""):
 
 class Root:
     def __call__(self, environ, start_response):
-        # first, handle conditional requests and generate an etag
-        # from the request
-        request = str(environ['QUERY_STRING']) + str(environ['selector.vars'])
-        etag = '"%s"' % md5(request).hexdigest()
-        if etag == environ.get('HTTP_IF_NONE_MATCH', ''):
-            start_response('304 Not Modified', [])
-            return []
-
         # seed the random number generator
         # for consistency and ease of dealing with HTTP,
         # the seed will always be a string
         seed = get_param(environ,'seed',None)
-        if seed is None:
+
+        # first, handle conditional requests and generate an etag
+        # from the request. etags only make sense though if there is
+        # a seed (otherwise, we expect it to return different results
+        # for the same params)
+        etag = ""
+        if seed is not None:
+            request = str(environ['QUERY_STRING']) + str(environ['selector.vars'])
+            etag = '"%s"' % md5(request).hexdigest()
+            if etag == environ.get('HTTP_IF_NONE_MATCH', ''):
+                start_response('304 Not Modified', [])
+                return []
+        else:
             seed = str(random.random())
         random.seed(str(seed))
 
