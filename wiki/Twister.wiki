@@ -57,3 +57,28 @@ $ curl 'http://twister.example.com/weibull?alpha=1;beta=30;n=10'
 }}}
 
 Twister also generates etag headers on all its responses and will respond properly to conditional requests if an etag and seed are specified. That can save it from having to regenerate a large number of numbers in some cases.
+
+
+= Installation =
+
+Twister is a Paste + WSGI app, which should make it fairly straightforward to deploy however you want. The eggs for all the libraries that it uses are also included with it. The easiest way to run it is to check it out of svn, copy one of the .ini files to local.ini, edit it to your requirements, run 
+
+{{{ 
+python setup.py develop 
+}}}
+
+Then do:
+
+{{{
+./init.sh .
+}}}
+
+(which sets up a nice workingenv with the the needed libraries installed)
+
+and then
+
+{{{
+./start.sh . local.ini
+}}}
+
+which is just a simple script that activates the workingenv and runs 'paster serve local.ini'
