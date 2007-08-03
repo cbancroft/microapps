@@ -44,10 +44,10 @@ will always return the same set of values each time it is requested.
 
 The response is always a JSON object with the following attributes:
 
-* seed (the seed used to generate the numbers. either the one specified as a parameter, or the random one that Twister generates. this is so you can always repeat a query even if you forgot to specify a seed on the first request)
-* n (that you specified. defaults to 1)
-* params (a dict of the additional params specified)
-* values (a list of the number(s) generated)
+  * seed (the seed used to generate the numbers. either the one specified as a parameter, or the random one that Twister generates. this is so you can always repeat a query even if you forgot to specify a seed on the first request)
+  * n (that you specified. defaults to 1)
+  * params (a dict of the additional params specified)
+  * values (a list of the number(s) generated)
 
 Eg,
 
@@ -55,3 +55,5 @@ Eg,
 $ curl 'http://twister.example.com/weibull?alpha=1;beta=30;n=10'
 {"values": [0.947198604486, 0.957787242769, 0.998331849861, 0.982809154613, 1.02004182685, 0.979367559154, 1.03786998886, 0.975261400968, 0.933165900789, 1.0122563764], "seed": "0.950636881446", "params": {"alpha": "1", "beta": "30"}, "n": 10}
 }}}
+
+Twister also generates etag headers on all its responses and will respond properly to conditional requests if an etag and seed are specified. That can save it from having to regenerate a large number of numbers in some cases.
