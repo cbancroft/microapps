@@ -88,14 +88,13 @@ class Root:
         # from the request. etags only make sense though if there is
         # a seed (otherwise, we expect it to return different results
         # for the same params)
-        etag = ""
-        if seed is not None:
-            request = str(environ['QUERY_STRING']) + str(environ['selector.vars'])
-            etag = '"%s"' % md5(request).hexdigest()
-            if etag == environ.get('HTTP_IF_NONE_MATCH', ''):
-                start_response('304 Not Modified', [])
-                return []
-        else:
+        request = str(environ['QUERY_STRING']) + str(environ['selector.vars'])
+        etag = '"%s"' % md5(request).hexdigest()
+        if seed is not None and etag == environ.get('HTTP_IF_NONE_MATCH', ''):
+            start_response('304 Not Modified', [])
+            return []
+        
+        if seed is None:
             seed = str(random.random())
         random.seed(str(seed))
 
