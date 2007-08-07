@@ -10,6 +10,8 @@ grab the code from svn, do 'easy_install .'
 
 = Examples =
 
+Here's a sample interactive session showing basically how twisterclient is used:
+
 {{{
 >>> from twisterclient import TwisterClient as TC
 >>> tc = TC("http://twister.example.com/")
