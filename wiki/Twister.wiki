@@ -58,6 +58,7 @@ $ curl 'http://twister.example.com/weibull?alpha=1;beta=30;n=10'
 
 Twister also generates etag headers on all its responses and will respond properly to conditional requests if an etag and seed are specified. That can save it from having to regenerate a large number of numbers in some cases.
 
+There is also now a TwisterClient python client interface that hides as much of that as possible. 
 
 = Installation =
 
