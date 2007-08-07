@@ -1,0 +1,68 @@
+#summary python client interface to twister server
+
+= Introduction =
+
+TwisterClient is a simple python client interface to a [Twister] server. 
+
+= Installation =
+
+grab the code from svn, do 'easy_install .'
+
+= Examples =
+
+{{{
+>>> from twisterclient import TwisterClient as TC
+>>> tc = TC("http://twister.example.com/")
+>>> tc.randint(a=0,b=100,n=10).values
+[16, 6, 30, 82, 93, 22, 36, 32, 5, 93]
+>>> tc.beta(alpha=1,beta=2,n=10).values
+[0.125162457172, 0.34501814743300002, 0.045099459151500002, 0.124022881902, 0.22895619015099999, 0.51336343612500002, 0.15387998667899999, 0.88984285971699995, 0.39228822764600002, 0.103056072043]
+>>> r = tc.uniform(a=0,b=100,n=10)
+>>> r.seed
+u'0.359850996471'
+>>> r.n
+10
+>>> r.params
+{u'a': u'0', u'b': u'100'}
+>>> r.values
+[0.38161708464400002, 27.8083811887, 72.668781842300007, 75.801429652899998, 31.938623311899999, 54.471519895299998, 13.424383519499999, 53.451658934400001, 52.446634499200002, 61.475240338100001]
+>>> r2 = tc.uniform(a=0,b=100,n=10,seed=r.seed)
+>>> r2.seed
+u'0.359850996471'
+>>> r2.values
+[0.38161708464400002, 27.8083811887, 72.668781842300007, 75.801429652899998, 31.938623311899999, 54.471519895299998, 13.424383519499999, 53.451658934400001, 52.446634499200002, 61.475240338100001]
+}}}
+
+= API =
+
+First, create a new TwisterClient object, specifying the Twister server's base URL:
+
+{{{
+from twisterclient import TwisterClient
+tc = TwisterClient("http://twister.example.com/")
+}}}
+
+then, you can call the distributions on that object. The distributions available (and their params) are:
+
+  * beta: alpha, beta
+  * expo: lambd
+  * gamma: alpha, beta
+  * gauss: mu, sigma
+  * lognormal: mu, sigma
+  * pareto: alpha
+  * uniform: a, b
+  * randint: a, b
+  * vormises: mu, kappa
+  * weibull: alpha, beta
+
+They correspond to the equivalent functions defined in the python standard random library.
+
+each can also accept 'seed', and 'n' arguments, which default to None, and 1, respectively. 
+
+They all return a TwisterResponse object which has the following attributes:
+
+  * seed: the seed used to generate the numbers
+  * values: list of random numbers generated
+  * n: the n parameter
+  * params: params specified
+  * json: raw json string that the Twister server returned
