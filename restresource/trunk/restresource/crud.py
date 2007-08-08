@@ -228,6 +228,9 @@ class SOController:
             del columns['childName']
         return columns
         
+    def name(self):
+        return self.soClass.__name__
+
     @staticmethod
     def parentValues(self):
         """return SQLObject dict of """
@@ -379,7 +382,7 @@ class CrudController:
         #if Form needs to get instantiated with more arguments, we'd
         #prolly make another function like initfields() to get
         #a **kw dict include here
-        return Form(fields=fields)
+        return Form(name=str(self.crud.name()+'_'+action).lower(),fields=fields)
         
     def getform(self, action):
         if not hasattr(self,'_form'):
