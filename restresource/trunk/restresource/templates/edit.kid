@@ -7,6 +7,6 @@
 </head>
 <body>
   <p py:if="tg_errors">Form Error!</p>
-  ${form(value=record_dict, submit_text="Save")}
+  ${form(value=record_dict, submit_text="Save", form_attrs=[('id',"%s_%s" % (form.name,record.id) )] )}
 </body>
 </html>

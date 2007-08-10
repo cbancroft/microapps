@@ -7,6 +7,6 @@
 </head>
 <body>
   <p py:if="tg_errors">Form Error!</p>
-  ${form(submit_text="Save")}
+  ${form(submit_text="Save", form_attrs=[('id',form.name)])}
 </body>
 </html>

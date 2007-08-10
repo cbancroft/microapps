@@ -167,6 +167,15 @@ class RESTResource:
         # without doing anything
         return d
 
+    def REST_childOverride(self, child_obj, *resources):
+        """If this is overridden in a subclass, you can:
+           1. return a non-false value which will override child responses
+           2. decorate the child further (e.g. a la obj.parents)
+           This should be useful if, for example, you want security
+           restrictions to be inherited
+        """
+        return False
+
     def REST_collection_dispatch(self, func_params, **params):
         #urls like: /col/ and /col;add_form and /col/;add_form
         #AND like /col/add_form (from map_vpath)
@@ -355,7 +364,8 @@ class RESTResource:
         if obj and hasattr(obj,'collection_dispatcher'):
             obj.parents = [p for p in self.parents]
             obj.parents.extend(resources)
-            return obj.collection_dispatcher(a,rparams,vpath,params)
+            return self.REST_childOverride(obj,*resources) \
+                   or obj.collection_dispatcher(a,rparams,vpath,params)
             
         rparams.insert(0,a)
         if resources:
