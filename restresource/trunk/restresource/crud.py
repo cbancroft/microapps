@@ -254,13 +254,12 @@ class SOController:
     
     @staticmethod
     def edit_form(self, table, tg_errors=None, **kwargs):
-        return dict(record = table,
-                    record_dict = self.crud.record_dict(table),
+        return dict(record=table,
                     columns=self.crud.columns().keys(),
+                    record_dict = self.crud.record_dict(table),
                     form = self.getform('update'),
                     tg_errors=tg_errors,
                     )
-
     @staticmethod
     def add_form(self, tg_errors=None, **kwargs):
         #adding tg_errors=None makes it an implicit error handler
@@ -404,18 +403,21 @@ class CrudController:
         return None
 
 
-    @expose(template='kid:restresource.templates.view')
+    @expose(template='kid:restresource.templates.view', format="xhtml", accept_format="text/html")
+    @expose(template='kid:restresource.templates.view', format="xhtml", accept_format='text/xml', content_type="text/xml")
     @expose(template='json', accept_format='text/javascript')
     def read(self,table,**kw):
         return self.crud.read(self,table,**kw)
     read.expose_resource = True
 
-    @expose(template='kid:restresource.templates.edit')
+    @expose(template='kid:restresource.templates.edit', format="xhtml", accept_format="text/html")
+    @expose(template='kid:restresource.templates.edit', format="xhtml", accept_format='text/xml', content_type="text/xml")
     def get_edit_form(self, table, **kw):
         return self.crud.edit_form(self,table,**kw)
     get_edit_form.expose_resource = True
 
-    @expose(template='kid:restresource.templates.add')
+    @expose(template='kid:restresource.templates.add', format="xhtml", accept_format="text/html")
+    @expose(template='kid:restresource.templates.add', format="xhtml", accept_format='text/xml', content_type="text/xml")
     def get_add_form(self, **kw):
         return self.crud.add_form(self,**kw)
 
