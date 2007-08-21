@@ -217,7 +217,9 @@ class RESTResource:
         elif self.REST_map.has_key(method):
             m = getattr(self,self.REST_map[method])
         elif self.REST_defaults.has_key(method):
-            m = getattr(self,self.REST_defaults[method])
+            m = getattr(self,self.REST_defaults[method],
+                        #backwards compatibility for index as read method
+                        getattr(self,'index',None))
 
         if m and getattr(m,"expose_resource",False):
             #return m(resource,*func_params,**params)
