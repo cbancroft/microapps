@@ -68,3 +68,32 @@ They all return a TwisterResponse object which has the following attributes:
   * n: the n parameter
   * params: params specified
   * json: raw json string that the Twister server returned
+  * next_seed: a new seed randomly generated. used for seed chaining (see below)
+
+== Seed Chaining ==
+
+If an application is making repeated requests for random values from twister and needs to be able to repeat the sequence of results (eg, for a scientific simulation), you need to be able to specify a different seed for each request. Twister now supports chaining seeds. On each request to a twister server, it will return a 'next_seed' value which is a randomly generated value appropriate to use for a seed. If you enable chaining in a TwisterClient object, it will transparently take care of using these 'next_seed' values as the seed for the next request it makes. 
+
+ 
+{{{
+tc = TwisterClient("http://twister.example.com/",chain=True)
+>>> r = tc.randint(a=0,b=10,seed="an initial seed")
+>>> r.seed
+u'an initial seed'
+>>> r.values
+[0]
+>>> r.next_seed
+u'0.279126552632'
+>>> r2 = tc.randint(a=0,b=10)
+>>> r2.values
+[8]
+>>> r2.seed
+u'0.279126552632'
+>>> r2.next_seed
+u'0.459606127637'
+>>> r3 = tc.randint(a=0,b=10)
+>>> r3.seed
+u'0.459606127637'
+>>> r3.values
+[0]
+}}}
