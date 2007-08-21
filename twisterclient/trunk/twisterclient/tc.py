@@ -43,6 +43,7 @@ class TwisterResponse:
         self.values = d['values']
         self.params = d['params']
         self.n      = d['n']
+        self.next_seed = d['next_seed']
 
 def rest(func):
     """ decorator that does most of the heavy lifting."""
@@ -50,6 +51,9 @@ def rest(func):
     def wrapper(*args,**kwargs):
         self = args[0]
         seed = kwargs.get('seed',None)
+        # handle seed chaining
+        if seed is None and self.chain:
+            seed = self.next_seed
         n    = kwargs.get('n',1)
         (d,paramlist) = func(self,**kwargs)
         params = slice_dict(kwargs,paramlist)
@@ -62,7 +66,9 @@ def rest(func):
             del params['lambd']
         params['n'] = n
         r = GET(url,params=params)
-        return TwisterResponse(r)
+        tr = TwisterResponse(r)
+        self.next_seed = tr.next_seed
+        return tr
     return wrapper
 
 def slice_dict(d,keys):
@@ -74,8 +80,10 @@ def slice_dict(d,keys):
     return n
 
 class TwisterClient:
-    def __init__(self,base=None):
+    def __init__(self,base=None,chain=False):
         self.base = base
+        self.chain = chain
+        self.next_seed = None
 
     @rest
     def beta(self,**kwargs):
