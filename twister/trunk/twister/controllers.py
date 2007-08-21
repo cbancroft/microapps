@@ -141,8 +141,9 @@ class Root:
         # get a next_seed so clients can chain requests
         next_seed = str(random.random())
         return render_json(start_response,
-                           dict(seed=seed, n=n, params=nparams, values=values),
-                           etag=etag,next_seed=next_seed)
+                           dict(seed=seed, n=n, params=nparams, values=values,
+                                next_seed=next_seed),
+                           etag=etag)
         
 urls = selector.Selector()
 urls.add('/[{distribution}]', _ANY_=Root())
