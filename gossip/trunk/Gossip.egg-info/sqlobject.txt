@@ -1,0 +1,2 @@
+db_module=gossip.model
+history_dir=$base/gossip/sqlobject-history
