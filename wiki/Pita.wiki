@@ -2,7 +2,7 @@
 
 = Introduction =
 
-Pita is a small REST service implementing simple data pockets.
+Pita is a small microapp implementing simple data pockets.
 
 Basically, it's a dictionary/hashtable available over http.
 
@@ -20,7 +20,7 @@ A sample curl session demonstrating how Pita works (assuming Pita is running on 
  ok
 }}}
 
-there's not much more to it than that.
+There's not much more to it than that.
 
 Like many other microapps, there is a 'service' layer at the top that basically just acts as a namespace so multiple applications can use the same pita server without stomping on each others data.
 
@@ -56,7 +56,7 @@ init.sh takes the directory to put the workingenv in as its only
 argument. It will create a workingenv and install all the necessary
 (and included) eggs into it.
 
-edit dev.cfg, prod.cfg, or copy one of those to a different
+Edit dev.cfg, prod.cfg, or copy one of those to a different
 file and configure to your liking (change port #, database connection string, etc.)
 
 Create a database, activate a workingenv, and initialize the DB schema:
@@ -77,3 +77,4 @@ run it:
 
 Pita was developed by Anders Pearson at the Columbia Center For New
 Media Teaching and Learning (http://ccnmtl.columbia.edu/). 
+ 
