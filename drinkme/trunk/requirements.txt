@@ -1,9 +1,0 @@
--f http://kang.ccnmtl.columbia.edu/eggs/
-PasteDeploy >= 0.9.6
-Paste >= 0.9.7
-selector >= 0.8.11
-setuptools >= 0.6a9
-resolver >= 0.2
-wsgiref >= 0.1.2
-PasteScript >= 0.9.7
-Cheetah >= 1.0
