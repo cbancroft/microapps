@@ -1,0 +1,2 @@
+db_module=pebble.model
+history_dir=$base/pebble/sqlobject-history
