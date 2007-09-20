@@ -1,0 +1,2 @@
+db_module=nqdq.model
+history_dir=$base/nqdq/sqlobject-history
