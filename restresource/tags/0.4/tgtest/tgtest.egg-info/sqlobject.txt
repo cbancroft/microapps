@@ -1,0 +1,2 @@
+db_module=tgtest.model
+history_dir=$base/tgtest/sqlobject-history

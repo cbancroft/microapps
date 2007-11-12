@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: restresource
+Version: 0.3
+Summary: helper for writing REST services with cherrypy,turbogears
+Home-page: http://microapps.org
+Author: anders,schuyler
+Author-email: anders@columbia.edu
+License: BSD
+Description: helper for writing REST services with cherrypy
+Platform: UNKNOWN
