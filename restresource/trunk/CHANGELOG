@@ -19,3 +19,7 @@
 * crud rearranged and simplified for easier form-fields modification
 * collections and resources now redirect to include '/' for
   better consistancy on relative-url form submission
+
+0.4
+* fix: getresource() sends tuple rather than first letter
+* CRUD.py foreignfields not hidden, documentation, SOController tidying
