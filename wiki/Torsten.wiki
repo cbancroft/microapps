@@ -23,6 +23,20 @@ A sample curl session looks like:
 
 The default tile size is 300 pixels. 
 
+The resulting JSON is a two dimensional array of tiles. It will look something like this:
+
+{{{
+tiles = [[{"uri" : "http://uploaded.example.com/blah/blah/image_0_0.jpg",
+           "width" : 300, "height" : 300},
+          {"uri" : "http://uploaded.example.com/blah/blah/image_0_1.jpg",
+           "width" : 300", "height" : 300},
+          ...],
+         [ ... ],
+         ...
+]
+
+}}}
+
 You can specify a different tile size with a `size` parameter like so:
 
 {{{
