@@ -1,7 +1,5 @@
 #summary An image tiling microapp
 
-Note: Torsten is currently just vaporware. This page is being written as a way of thinking through the API/design.
-
 = Introduction =
 
 Torsten is a microapp for basic image tiling. 
@@ -26,14 +24,14 @@ The default tile size is 300 pixels.
 The resulting JSON is a two dimensional array of tiles. It will look something like this:
 
 {{{
-tiles = [[{"uri" : "http://uploaded.example.com/blah/blah/image_0_0.jpg",
+{"tiles" : [[{"uri" : "http://uploaded.example.com/blah/blah/image_0_0.jpg",
            "width" : 300, "height" : 300},
           {"uri" : "http://uploaded.example.com/blah/blah/image_0_1.jpg",
            "width" : 300", "height" : 300},
           ...],
          [ ... ],
          ...
-]
+]}
 
 }}}
 
@@ -62,6 +60,15 @@ supported.
  * upload server running somewhere and accessible to Torsten
 
 All other requirements are bundled with Drinkme and will be automatically installed with the included `init.sh` script. 
+
+= Possible Future Features =
+
+If anyone has strong feelings one way or the other about these, let us know:
+
+ * specify no upload_uri and get a tarball or zip of the image tiles. The JSON struct (also included in the tarball) would then refer to filenames of the tiles rather than URIs. Multipart HTTP might also be useful here. 
+ * specify an image URI instead of `POST`ing the image directly. Then Torsten would fetch the image at the URI, and tile it. 
+ * async/parallel image uploading. Currently, it uploads the tiles one at a time to the upload server and that can be a serious bottleneck if the latency on the upload server is bad. Sometimes this could be sped up by doing the uploads in parallel. The downside is that if this isn't done carefully, it could overwhelm the upload server.
+ * recursive tiling. Imagining a farm of Torsten servers. Upload a really big image to one and, instead of tiling it all by itself, it makes a couple big tiles and sends each of them out to different Torsten servers which in turn make smaller tiles out of each of those, thus distributing the load a bit more evenly. I guess if things get to the point that this is necessary, you'd probably want to move to a mapReduce type setup though. 
 
 = Installation =
 
