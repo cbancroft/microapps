@@ -58,6 +58,7 @@ supported.
 
  * python 2.5
  * setuptools
+ * Python Image Library installed in your /usr/lib/python2.5/site-packages/ (this usually has to be installed with a distro specific command (eg, 'apt-get install python-imaging'))
  * upload server running somewhere and accessible to Torsten
 
 All other requirements are bundled with Drinkme and will be automatically installed with the included `init.sh` script. 
