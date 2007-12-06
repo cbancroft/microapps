@@ -184,6 +184,8 @@ _soc_table_so_mapper = dict( [
     (sqlobject.col.SOIntCol,_soc_default_SOIntCol),
     (sqlobject.col.SODecimalCol,_soc_default_Number),
     (sqlobject.col.SOCurrencyCol,_soc_default_Number),
+    (sqlobject.col.SOFloatCol,_soc_default_Number),
+    (sqlobject.col.SOEnumCol,_soc_default_SOUnicodeCol),
     ] )
 
 class SOController:
