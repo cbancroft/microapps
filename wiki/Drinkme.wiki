@@ -40,6 +40,18 @@ enabled by sending a non-zero value for the 'square' parameter:
     http://drinkme.example.com/resize > square.jpg
 }}}
 
+From python, you can use the convenient [http://microapps.sourceforge.net/restclient/ restclient]:
+{{{
+>>> from restclient import POST
+>>> image = open("big_image.jpg", 'r').read()
+>>> thumb_file = open("big_image_thumb.jpg", 'w')
+>>> out = POST('http://drinkme.example.com/resize', 
+               files= { 'image' : { 'file' : image_file , 'filename' : image }},
+               async=False)
+>>> thumb_file.write(out)
+>>> thumb_file.close()
+}}}
+  
 That's pretty much it. Currently only jpg, gif, and png images are
 supported. 
 
