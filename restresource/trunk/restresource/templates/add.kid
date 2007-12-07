@@ -6,7 +6,8 @@
 <title>Add</title>
 </head>
 <body>
-  <p py:if="tg_errors">Form Error!</p>
+  <div class="flash" py:if="tg_flash" py:content="tg_flash"></div>
+  <div class="errors" py:if="tg_errors">Form Error!</div>
   ${form(submit_text="Save", form_attrs=[('id',form.name)])}
 </body>
 </html>

@@ -6,7 +6,8 @@
 <title>Edit</title>
 </head>
 <body>
-  <p py:if="tg_errors">Form Error!</p>
+  <div class="flash" py:if="tg_flash" py:content="tg_flash"></div>
+  <div class="errors" py:if="tg_errors">Form Error!</div>
   ${form(value=record_dict, submit_text="Save", form_attrs=[('id',"%s_%s" % (form.name,record.id) )] )}
 </body>
 </html>

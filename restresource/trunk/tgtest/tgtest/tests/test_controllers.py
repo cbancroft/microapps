@@ -62,12 +62,14 @@ def test_fieldtypes_child():
     assert "<th>datetime</th>" in cherrypy.response.body[0]
     assert "<th>date</th>" in cherrypy.response.body[0]
     assert "<th>decimal</th>" in cherrypy.response.body[0]
+    assert "<th>enum</th>" in cherrypy.response.body[0]
+    assert "<th>floater</th>" in cherrypy.response.body[0]
     assert "<th>foreignID</th>" in cherrypy.response.body[0]
 
 def test_fieldtypes_create():
     testutil.createRequest("/child1/1/fieldtypes",
                            method="POST",
-                           rfile=StringIO.StringIO("utf=asdf&currency=2.23&truefalse=on&x=90&string=happyjoy&datetime=2007/1/26 16:12&date=1/26/2007&decimal=1.1"))
+                           rfile=StringIO.StringIO("utf=asdf&currency=2.23&truefalse=on&x=90&string=happyjoy&datetime=2007/1/26 16:12&date=1/26/2007&decimal=1.1&enum=enumY&floater=2.2"))
     #print cherrypy.response.body[0]
     assert "ok" in cherrypy.response.body[0]
 
@@ -75,7 +77,7 @@ def test_fieldtypes_errorhandle():
     """currency will be a string.  Should return the form"""
     testutil.createRequest("/child1/1/fieldtypes/",
                            method="POST",
-                           rfile=StringIO.StringIO("utf=asdf&currency=NOT_A_CURRENCY&truefalse=on&x=90&string=happyjoy&datetime=2007/1/26 16:12&date=1/26/2007&decimal=1.1"))
+                           rfile=StringIO.StringIO("utf=asdf&currency=NOT_A_CURRENCY&truefalse=on&x=90&string=happyjoy&datetime=2007/1/26 16:12&date=1/26/2007&decimal=1.1&enum=enumY&floater=2.2"))
     assert "Please enter a number" in cherrypy.response.body[0]
 
 def test_fieldtypes_create_confirm():
@@ -99,3 +101,8 @@ def test_fieldtypes_create_confirm():
     assert "<td>2007-01-26</td>" in cherrypy.response.body[0]
     #decimal
     assert "<td>1.1</td>" in cherrypy.response.body[0]
+    #float
+    assert "<td>2.2</td>" in cherrypy.response.body[0]
+    #enum
+    assert "<td>enumY</td>" in cherrypy.response.body[0]
+    

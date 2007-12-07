@@ -25,5 +25,7 @@ class FieldTypes(SQLObject):
     date = DateCol()
     decimal = DecimalCol(size=4, precision=2)
     foreign = ForeignKey("Child1")
+    enum = EnumCol(enumValues=('enumX', 'enumY', 'enumZ'), default='enumX')
+    floater = FloatCol(default=0)
     #not testing BLOBCol,PickleCol for now
     

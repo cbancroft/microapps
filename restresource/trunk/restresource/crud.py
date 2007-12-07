@@ -255,20 +255,24 @@ class SOController:
         return field_dict
     
     @staticmethod
-    def edit_form(self, table, tg_errors=None, **kwargs):
-        return dict(record=table,
-                    columns=self.crud.columns().keys(),
-                    record_dict = self.crud.record_dict(table),
-                    form = self.getform('update'),
-                    tg_errors=tg_errors,
+    def edit_form(self, table, tg_errors=None, tg_flash=None, **kwargs):
+        kwargs.update(record=table,
+                      columns=self.crud.columns().keys(),
+                      record_dict = self.crud.record_dict(table),
+                      form = self.getform('update'),
+                      tg_errors=tg_errors,
+                      tg_flash=tg_flash
                     )
+        return kwargs
     @staticmethod
-    def add_form(self, tg_errors=None, **kwargs):
+    def add_form(self, tg_errors=None, tg_flash=None, **kwargs):
         #adding tg_errors=None makes it an implicit error handler
-        return dict(form = self.getform('create'),
-                    columns=self.crud.columns().keys(),
-                    tg_errors=tg_errors,
-                    )
+        kwargs.update(form = self.getform('create'),
+                      columns=self.crud.columns().keys(),
+                      tg_errors=tg_errors,
+                      tg_flash=tg_flash,                    
+                      )
+        return kwargs
 
     def update_error(self, *pargs, **kwargs):
         #self is CrudController instance, confusingly
@@ -443,15 +447,21 @@ class CrudController:
         kw = self.crud.create_validation(self,**kw)
         return error_response(kw) \
                or error_response(self.crud.create(self,table,**kw)) \
-               or "ok"
+               or self.create_success(table,**kw)
     create.expose_resource = True
 
     def update(self,table,**kw):
         kw = self.crud.update_validation(self,table,**kw)
         return error_response(kw) \
                or error_response(self.crud.update(self,table,**kw)) \
-               or "ok"
+               or self.update_success(table,**kw)
     update.expose_resource = True
+
+    def update_success(self,table,**kw):
+        return "ok"
+
+    def create_success(self,table,**kw):
+        return "ok"
 
     #should there be an error_handler default here?
     def delete(self,table,**kw):
