@@ -1,0 +1,109 @@
+#!/usr/bin/env python
+##############################################################################
+#
+# Copyright (c) 2004 Zope Corporation and Contributors.
+# All Rights Reserved.
+#
+# This software is subject to the provisions of the Zope Public License,
+# Version 2.1 (ZPL).  A copy of the ZPL should accompany this distribution.
+# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
+# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
+# FOR A PARTICULAR PURPOSE.
+#
+##############################################################################
+"""Zope 2 test script
+
+see zope.testing testrunner.txt
+
+(hacked to work w/ repoze and virtual env)
+"""
+
+import os.path, sys
+import pkg_resources
+
+req = pkg_resources.Requirement.parse('ned')
+root_path = pkg_resource.resource_filename('/')
+
+# Remove script directory from path:
+scriptdir = os.path.realpath(os.path.dirname(sys.argv[0]))
+sys.path[:] = [p for p in sys.path if os.path.realpath(p) != scriptdir]
+
+venv = os.environ['INSTANCE_HOME'] \
+       = os.environ['ZOPE_HOME'] = os.environ.get('VIRTUAL_ENV')
+
+
+defaults = '--tests-pattern ^tests$ -v'.split()
+defaults += ['-m',
+             '!^('
+             'ZConfig'
+             '|'
+             'BTrees'
+             '|'
+             'persistent'
+             '|'
+             'ThreadedAsync'
+             '|'
+             'transaction'
+             '|'
+             'ZEO'
+             '|'
+             'ZODB'
+             '|'
+             'ZopeUndo'
+             '|'
+             'zdaemon'
+             '|'
+             'zope[.]testing'
+             '|'
+             'zope[.]app'
+             ')[.]']
+
+venv = os.path.abspath(venv)
+lib_home = os.path.join(sys.prefix, 'lib', 'python%s' % sys.version[:3])
+defaults += ['--path', lib_home]
+#products = os.path.join(venv, 'Products')
+if os.path.exists(root_path):
+    defaults += ['--package-path', root_path]
+
+# we are assuming we are in a virtual env and therefore can happily
+# not worry about what we add
+
+for path in sys.path:
+    defaults += ['--test-path', path]
+
+from zope.testing import testrunner
+
+
+import sys
+#sys.setrecursionlimit(45)
+
+def load_config_file(option, opt, config_file, *ignored):
+    config_file = os.path.abspath(config_file)
+    print "Parsing %s" % config_file
+    import Zope2
+    Zope2.configure(config_file)
+
+testrunner.setup.add_option(
+    '--config-file', action="callback", type="string", dest='config_file',
+    callback=load_config_file,
+    help="""\
+Initialize Zope with the given configuration file.
+""")
+
+
+def filter_warnings(option, opt, *ignored):
+    import warnings
+    warnings.simplefilter('ignore', Warning, append=True)
+
+testrunner.other.add_option(
+    '--nowarnings', action="callback", callback=filter_warnings,
+    help="""\
+Install a filter to suppress warnings emitted by code.
+""")
+
+def run():
+    return testrunner.run(defaults)
+
+if __name__ == '__main__':
+    sys.exit(run())
