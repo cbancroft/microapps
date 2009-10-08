@@ -108,10 +108,14 @@ def encode_multipart_formdata(fields, files):
         L.append('Content-Disposition: form-data; name="%s"' % key)
         L.append('')
         L.append(str(value))
-    for (key, filename, value) in files:
+    for (key, filename, value, mimetype) in files:
         L.append('--' + BOUNDARY)
         L.append('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename))
-        L.append('Content-Type: %s' % get_content_type(filename))
+        if mimetype is None:
+            content_type=get_content_type(filename)
+        else:
+            content_type=mimetype
+        L.append('Content-Type: %s' % content_type)
         L.append('')
         L.append(str(value))
     L.append('--' + BOUNDARY + '--')
@@ -152,7 +156,7 @@ def POST(url,params=None,files=None,accept=[],headers=None,async=True,resp=False
 
     files to upload may be specified. the data structure for them is:
 
-       param : {'file' : file object, 'filename' : filename}
+        param : {'file' : file object, 'filename' : filename, 'mimetype': mimetype (optional)}
 
     and immediately return nothing.
 
@@ -175,7 +179,7 @@ def PUT(url,params=None,files=None,accept=[],headers=None,async=True,resp=False)
 
     files to upload may be specified. the data structure for them is:
 
-       param : {'file' : file object, 'filename' : filename}
+        param : {'file' : file object, 'filename' : filename, 'mimetype': mimetype (optional)}
 
     and immediately return nothing.
 
@@ -237,7 +241,7 @@ def rest_invoke(url,method=u"GET",params=None,files=None,accept=[],headers=None,
     params: dictionary of params to include in the request
     files: dictionary of files to upload. the structure is
 
-          param : {'file' : file object, 'filename' : filename}
+        param : {'file' : file object, 'filename' : filename, 'mimetype': mimetype (optional)}
 
     accept: list of mimetypes to accept in order of preference. defaults to '*/*'
     headers: dictionary of additional headers to send to the server
@@ -340,7 +344,8 @@ def unpack_params(params):
     return [(k,params[k]) for k in params.keys()]
 
 def unpack_files(files):
-    return [(k,files[k]['filename'],files[k]['file']) for k in files.keys()]
+    return [(k,files[k]['filename'],files[k]['file'],files[k].get('mimetype', None)) 
+            for k in files.keys()]
 
 def add_accepts(accept=None,headers=None):
     if accept  is None: accept  = []
