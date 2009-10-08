@@ -52,6 +52,8 @@ Joe Gregario's httplib2 library is required. It can be easy_installed, or downlo
 nose is required to run the unit tests.
 
 CHANGESET:
+  * 2009-10-08 - Anders - merged Taras Mankovski's patch for adding body to POST/PUT and test improvements
+  * 2009-10-08 - Anders - merged Peter Fein's patch for specifying mimetypes on file uploads
   * 2007-06-13 - Anders - added experimental, partial support for HTTPCallback
   * 2007-03-28 - Anders - merged Christopher Hesse's patches for fix_params and to eliminate
                           mutable default args
@@ -74,7 +76,7 @@ n                          and we now use post_multipart for everything since it
 
 import urllib2,urllib, mimetypes, types, thread, httplib2
 
-__version__ = "0.9.9"
+__version__ = "0.9.10"
 
 def post_multipart(host, selector, method,fields, files, headers=None,return_resp=False, body=None):
     """
