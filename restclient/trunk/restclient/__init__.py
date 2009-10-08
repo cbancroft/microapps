@@ -76,7 +76,7 @@ import urllib2,urllib, mimetypes, types, thread, httplib2
 
 __version__ = "0.9.9"
 
-def post_multipart(host, selector, method,fields, files, headers=None,return_resp=False):
+def post_multipart(host, selector, method,fields, files, headers=None,return_resp=False, body=None):
     """
     Post fields and files to an http host as multipart/form-data.
     fields is a sequence of (name, value) elements for regular form fields.
@@ -84,7 +84,7 @@ def post_multipart(host, selector, method,fields, files, headers=None,return_res
     Return the server's response page.
     """
     if headers is None: headers = {}
-    content_type, body = encode_multipart_formdata(fields, files)
+    content_type, body = encode_multipart_formdata(fields, files, body)
     h = httplib2.Http()
     headers['Content-Length'] = str(len(body))
     headers['Content-Type']   = content_type
@@ -94,7 +94,7 @@ def post_multipart(host, selector, method,fields, files, headers=None,return_res
     else:
         return content
 
-def encode_multipart_formdata(fields, files):
+def encode_multipart_formdata(fields, files, body):
     """
     fields is a sequence of (name, value) elements for regular form fields.
     files is a sequence of (name, filename, value) elements for data to be uploaded as files
@@ -103,6 +103,11 @@ def encode_multipart_formdata(fields, files):
     BOUNDARY = '----------ThIs_Is_tHe_bouNdaRY_$'
     CRLF = '\r\n'
     L = []
+    # add body to the beginning
+    if body:
+        L.append(body)
+        L.append('')
+        L.append(str(body))
     for (key, value) in fields:
         L.append('--' + BOUNDARY)
         L.append('Content-Disposition: form-data; name="%s"' % key)
@@ -146,61 +151,47 @@ def GET(url,params=None,files=None,accept=[],headers=None,async=False,resp=False
     """
     return rest_invoke(url=url,method=u"GET",params=params,files=files,accept=accept,headers=headers,async=async,resp=resp)
 
-def POST(url,params=None,files=None,accept=[],headers=None,async=True,resp=False):
+def POST(url,**kwargs):
     """ make an HTTP POST request.
 
-    performs a POST request to the specified URL.
-    
-    in addition, parameters and headers can be specified (as dicts). a list of mimetypes
-    to accept may be specified.
-
-    files to upload may be specified. the data structure for them is:
-
-        param : {'file' : file object, 'filename' : filename, 'mimetype': mimetype (optional)}
-
-    and immediately return nothing.
-
-    by default POST() performs the request in a new thread and returns (nothing) immediately.
-
-    To wait for the response and have it return the body of the response, specify async=False. 
-
-    if resp=True is passed in, it will return a tuple of an httplib2 response object
-    and the content instead of just the content. 
+    url - string to make post to
+    params - string to include with post ( optional, params and body are mutually exlusive )
+    body - string to include with post ( optional, params and body are mutually exlusive )
+    accept - list of mimetypes to accept
+    files - files to upload may be specified in dict format {'file' : file object, 'filename' : filename}
+    headers - dict of headers to include
+    async - boolean set to False to wait for response and have it return body of the response
+    resp - boolean True will return a tuple of a httplib2 response object and the content instead of just content 
     """
-    return rest_invoke(url=url,method=u"POST",params=params,files=files,accept=accept,headers=headers,async=async,resp=resp)
+    kwargs['method'] = u'POST'
+    return rest_invoke(url=url,**kwargs)
 
-def PUT(url,params=None,files=None,accept=[],headers=None,async=True,resp=False):
+def PUT(url,**kwargs):
     """ make an HTTP PUT request.
 
-    performs a PUT request to the specified URL.
-    
-    in addition, parameters and headers can be specified (as dicts). a list of mimetypes
-    to accept may be specified.
-
-    files to upload may be specified. the data structure for them is:
-
-        param : {'file' : file object, 'filename' : filename, 'mimetype': mimetype (optional)}
-
-    and immediately return nothing.
-
-    by default PUT() performs the request in a new thread and returns (nothing) immediately.
-
-    To wait for the response and have it return the body of the response, specify async=False. 
-
-    if resp=True is passed in, it will return a tuple of an httplib2 response object
-    and the content instead of just the content. 
+    url - string to make post to
+    params - string to include with post ( optional, params and body are mutually exlusive )
+    body - string to include with post ( optional, params and body are mutually exlusive )
+    accept - list of mimetypes to accept
+    files - files to upload may be specified in dict format {'file' : file object, 'filename' : filename}
+    headers - dict of headers to include
+    async - boolean set to False to wait for response and have it return body of the response
+    resp - boolean True will return a tuple of a httplib2 response object and the content instead of just content 
     """
+    kwargs['method'] = u'PUT'
+    return rest_invoke(url=url,**kwargs)
 
-    return rest_invoke(url=url,method=u"PUT",params=params,files=files,accept=accept,headers=headers,async=async,resp=resp)
-
-def DELETE(url,params=None,files=None,accept=[],headers=None,async=True,resp=False):
+def DELETE(url,**kwargs):
     """ make an HTTP DELETE request.
 
-    performs a DELETE request to the specified URL.
-    
-    in addition, parameters and headers can be specified (as dicts). a list of mimetypes
-    to accept may be specified.
-
+    url - string to make post to
+    params - string to include with post ( optional, params and body are mutually exlusive )
+    body - string to include with post ( optional, params and body are mutually exlusive )
+    accept - list of mimetypes to accept
+    headers - dict of headers to include
+    async - boolean set to False to wait for response and have it return body of the response
+    resp - boolean True will return a tuple of a httplib2 response object and the content instead of just content 
+ 
     by default DELETE() performs the request in a new thread and returns (nothing) immediately.
 
     To wait for the response and have it return the body of the response, specify async=False. 
@@ -209,9 +200,10 @@ def DELETE(url,params=None,files=None,accept=[],headers=None,async=True,resp=Fal
     and the content instead of just the content. 
     """
     
-    return rest_invoke(url=url,method=u"DELETE",params=params,files=files,accept=accept,headers=headers,async=async,resp=resp)
+    kwargs['method'] = u'DELETE'        
+    return rest_invoke(url=url,**kwargs)
 
-def rest_invoke(url,method=u"GET",params=None,files=None,accept=[],headers=None,async=False,resp=False,httpcallback=None):
+def rest_invoke(url, **kwargs):
     """ make an HTTP request with all the trimmings.
 
     rest_invoke() will make an HTTP request and can handle all the
@@ -251,20 +243,33 @@ def rest_invoke(url,method=u"GET",params=None,files=None,accept=[],headers=None,
                   override the other params.
     
     """
-    if async:
-        thread.start_new_thread(_rest_invoke,(url,method,params,files,accept,headers,resp,httpcallback))
+    if kwargs.get('async',False):
+        method  = kwargs.get('method', u'GET')
+        params  = kwargs.get('params', None)
+        files   = kwargs.get('files', None)
+        accept  = kwargs.get('accept', [])
+        headers = kwargs.get('headers', None)
+        resp    = kwargs.get('resp', None)
+        httpcallback = kwargs.get('httpcallback', None)
+        body    = kwargs.get('body', None)
+        thread.start_new_thread(_rest_invoke,(url, method, params, files, accept, headers, resp, httpcallback, body))
     else:
-        return _rest_invoke(url,method,params,files,accept,headers,resp,httpcallback)
+        return _rest_invoke(url,**kwargs)
 
-def _rest_invoke(url,method=u"GET",params=None,files=None,accept=None,headers=None,resp=False,httpcallback=None):
-    if params  is None: params  = {}
-    if files   is None: files   = {}
-    if accept  is None: accept  = []
-    if headers is None: headers = {}
-
+def _rest_invoke(url,**kwargs):
+    method  = kwargs.get('method', u'GET')
+    params  = kwargs.get('params', {})
+    files   = kwargs.get('files', {})
+    accept  = kwargs.get('accept', [])
+    headers = kwargs.get('headers', {})
+    body    = kwargs.get('body', None)
+    resp    = kwargs.get('resp', False)
+    httpcallback = kwargs.get('httpcallback', None)
+    
     if httpcallback is not None:
         method = httpcallback.method
         url    = httpcallback.url
+        body   = httpcallback.body
         if httpcallback.queryString != "":
             if "?" not in url:
                 url += "?" + httpcallback.queryString
@@ -283,10 +288,7 @@ def _rest_invoke(url,method=u"GET",params=None,files=None,accept=None,headers=No
             print "warning: restclient doesn't support HTTPCallback's restrictions yet"
         if httpcallback.follow_all_redirects:
             print "warning: restclient doesn't support HTTPCallback's follow_all_redirects_yet"
-        if httpcallback.body != "":
-            print "warning: restclient doesn't support HTTPCallback's body yet"
         
-    
     headers = add_accepts(accept,headers)
     if files:
         return post_multipart(extract_host(url),extract_path(url),
@@ -294,12 +296,12 @@ def _rest_invoke(url,method=u"GET",params=None,files=None,accept=None,headers=No
                               unpack_params(fix_params(params)),
                               unpack_files(fix_files(files)),
                               fix_headers(headers),
-                              resp)
+                              resp,body)
     else:
         return non_multipart(fix_params(params), extract_host(url),
-                             method, extract_path(url), fix_headers(headers),resp)
+                             method, extract_path(url), fix_headers(headers),resp,body)
 
-def non_multipart(params,host,method,path,headers,return_resp):
+def non_multipart(params,host,method,path,headers,return_resp,body):
     params = urllib.urlencode(params)
     if method == "GET":
         headers['Content-Length'] = '0'
@@ -312,14 +314,21 @@ def non_multipart(params,host,method,path,headers,return_resp):
                     path += params
                 else:
                     path += "&" + params
-            params = ""
+            params = ""       
     else:
-        headers['Content-Length'] = str(len(params))
+        if body:
+            headers['Content-Length'] = str(len(params) + len(body))
+        else:
+            headers['Content-Length'] = str(len(params))
     if not headers.has_key('Content-Type'):
         headers['Content-Type'] = 'application/x-www-form-urlencoded'
     h = httplib2.Http()
     url = "http://%s%s" % (host,path)
-    resp,content = h.request(url,method.encode('utf-8'),params.encode('utf-8'),headers)
+    if method != 'GET' and body:
+        resp,content = h.request(url,method.encode('utf-8'),body.encode('utf-8'),headers)
+    else:
+        resp, content = h.request(url,method.encode('utf-8'),params.encode('utf-8'),headers)
+
     if return_resp:
         return resp,content
     else:

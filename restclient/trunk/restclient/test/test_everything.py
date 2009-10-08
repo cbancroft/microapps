@@ -41,10 +41,15 @@ from restclient import *
 import threading, os
 import BaseHTTPServer
 import cgi
+import random
 
-port_num = int(os.environ.get('RESTCLIENT_TEST_PORT',11123))
+random.seed()
+port_num = int(os.environ.get('RESTCLIENT_TEST_PORT',random.randint(10000,11000)))
 hostname = "http://localhost:%d/" % port_num
-image = open('sample.jpg').read()
+image = open(os.path.join(os.getcwd(), 'sample.jpg')).read()
+
+# default headers
+headers = {'accept-encoding': 'compress, gzip'}
 
 def start_server(callback):
     class LoopbackHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -87,42 +92,49 @@ def start_server(callback):
         server_address = ('', port_num)
         httpd = server_class(server_address, handler_class)
         httpd.handle_request()
-
+        
     thread = threading.Thread(target=run)
     thread.setDaemon(True)
     thread.start()
     callback()
-
+    
 
 def servify(f):
     def test(*args, **kwargs):
         def run():
             f(*args, **kwargs)
+        global port_num, hostname
+        port_num += 1
+        hostname = "http://localhost:%d/" % port_num
         start_server(run)
+    test.__doc__ = f.__doc__
     return test
 
 
 @servify
 def test_get():
-    expected = "GET / HTTP/1.1\nHost: localhost:11123\r\ncontent-length: 0\r\n" + \
-    "content-type: application/x-www-form-urlencoded\r\naccept-encoding: compress, gzip\r\n" + \
-    "accept: */*\r\nuser-agent: Python-httplib2/$Rev: 133 $\r\n\n\n"
-
-    r = GET(hostname)
-    assert r.startswith('GET /')
-    assert r == expected
+    "Testing GET request"
     
+    expected = "GET / HTTP/1.1\nHost: localhost:%s\r\ncontent-length: 0\r\n"%(port_num) + \
+    "content-type: application/x-www-form-urlencoded\r\naccept-encoding: compress, gzip\r\n" + \
+    "accept: */*\r\nuser-agent: Python-httplib2/%s \r\n\n\n"%httplib2.__version__
+
+    r = GET(hostname, headers=headers)
+    assert r.startswith('GET /')
+    assert r.strip() == expected.strip()
 
 @servify
 def test_post():
+    "Testing POST request without body"
     expected = "POST\nvalue: store this\nDONE\n"
     r = POST(hostname, params={'value' : 'store this'}, accept=["text/plain","text/html"], async=False)
     assert r.startswith('POST /')
     assert "value=store+this" in r
     assert "accept: text/plain,text/html" in r
-
+    
 @servify
 def test_post_image():
+    "Testing POST with image without body"
     result = POST(hostname + "resize", files={'image' : {'file' : image, 'filename' : 'sample.jpg'}},
                   async=False)
     assert result.startswith('POST /resize')
@@ -130,6 +142,8 @@ def test_post_image():
 
 @servify
 def test_get_unicode():
+    "Testing GET with Unicode"
+    
     expected = u"GET\nfoo\u2012: \u2012\nDONE\n".encode('utf-8')
     r = GET(unicode(hostname + "foo/"),params={u'foo\u2012' : u'\u2012'},
             headers={u"foo\u2012" : u"foo\u2012"})
@@ -140,6 +154,8 @@ def test_get_unicode():
 
 @servify
 def test_post_unicode():
+    "Testing POST Unicode without body"
+    
     result = POST(unicode(hostname + "foo/"), 
                   params={u'foo\u2012' : u'\u2012'},
                   async=False)
@@ -147,9 +163,18 @@ def test_post_unicode():
     expected = "foo%E2%80%92=%E2%80%92" # urlencoded 
     assert expected in result
 
+@servify
+def test_post_with_body():
+    "Testing POST request with body"
+    body = '<test><string>Some text</string></test>'
+    r = POST(hostname, body=body, accept=["text/plain","text/html"], async=False )
+    assert r.startswith('POST /')
+    assert body in r
 
-if __name__ == "__main__":
+def main():
     import nose
     nose.main()
 
+if __name__ == "__main__":
+    main()
  
