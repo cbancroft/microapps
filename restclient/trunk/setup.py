@@ -30,7 +30,7 @@ setup(
     version="0.9.10",
     author="Anders Pearson",
     author_email="anders@columbia.edu",
-    url="http://microapps.sourceforge.net/restclient/",
+    url="http://code.google.com/p/microapps/wiki/Restclient",
     description="convenient library for writing REST clients",
     long_description="makes it easy to invoke REST services properly",
     install_requires = ["httplib2"],
