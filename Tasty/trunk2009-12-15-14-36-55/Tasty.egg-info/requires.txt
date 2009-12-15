@@ -1,0 +1,3 @@
+TurboGears >= 1.0b1
+restresource >= 0.1
+restclient >= 0.9.5

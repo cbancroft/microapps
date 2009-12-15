@@ -1,0 +1,16 @@
+Metadata-Version: 1.0
+Name: Tasty
+Version: 1.2dev-r35
+Summary: rich, general purpose tagging engine built as a REST service
+Home-page: http://microapps.sourceforge.net/tasty/
+Author: Anders Pearson
+Author-email: anders@columbia.edu
+License: http://www.gnu.org/licenses/gpl.html
+Description: UNKNOWN
+Keywords: turbogears.app
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Framework :: TurboGears
