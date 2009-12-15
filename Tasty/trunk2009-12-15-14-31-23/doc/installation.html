@@ -1,0 +1,133 @@
+<html>
+  <head><title>Tasty Installation</title>
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+
+<body>
+  <div id="page">
+  <div id="sidebar">
+    <ul>
+      <li><a href="index.html">Tasty</a></li>
+      <li><a href="changelog.html">Changelog</a></li>
+      <li><a href="requirements.html">Requirements</a></li>
+      <li>Installation</li>
+      <li><a href="tag_model.html">Tag Model</a></li>
+      <li><a href="rest_interface.html">REST Interface</a></li>
+      <li><a href="client_implementations.html">Client Implementations</a></li>
+      <li><a href="tasty_sites.html">Sites</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+  <h1>Tasty Installation</h1>
+
+  <h2>Introduction</h2>
+
+  <p>These docs cover UNIX installation. Tasty has reportedly been made to run on windows, 
+  but the author has no way to test that so you're on your own there.</p>
+
+
+  <p>The basic steps for installing Tasty are to get the code and the requirements, make sure the
+  requirements are installed in your environment, set up a database, configure Tasty to use the database,
+  and then start the Tasty server.</p>
+
+  <h2>Download Tasty</h2>
+
+  <p>
+    Either download the source distribution from the <a href="http://cheeseshop.python.org/pypi/Tasty">Cheeseshop</a>.
+  </p>
+
+  <p>Or check a release from subversion:</p>
+
+  <pre>
+% svn co https://svn.sourceforge.net/svnroot/microapps/tasty/tags/1.1 tasty
+  </pre>
+
+  <h2>Install Requirements Into Your environment</h2>
+
+  <p>
+    First, you'll need a database (preferably postgresql; that's what the rest of this document 
+    will use as an example. it should work with just about any database that SQLObject supports though). 
+    Having sqlite3 installed will also be useful for running the unit tests.</p>
+
+  <p>
+    Then you'll need to 
+    <a href="http://peak.telecommunity.com/DevCenter/EasyInstall#installation-instructions">install setuptools/easy_install</a> 
+    (if you don't already have it installed).
+  </p>
+
+  <p>Tasty is a pretty standard TurboGears application so if you're comfortable installing and deploying TG,
+  It should be pretty straightforward. Tasty's requirements are all listed in the requirements.txt file and
+  should all be ready to easy_install. </p>
+  
+  <p>The easiest path to installation (and the strongly recommended approach) is to use the workingenv.py script 
+  in the project directory to download and install all of the python dependencies for you:</p>
+
+  <pre>
+% python workingenv.py -r requirements.txt working-env
+  </pre>
+
+  <p>That will create a 'working-env' directory with all of the requirements installed in it. 
+  You must then activate the environment to run tasty:</p>
+
+  <pre>
+% source working-env/bin/activate
+  </pre>
+
+  <p>You can read more about workingenv.py in Ian Bicking's <a href="http://blog.ianbicking.org/workingenv-revisited.html">blog post</a>.</p>
+
+  <p>You should then run the unit tests to make sure everything was installed properly. It should look something like:</p>
+
+  <pre>
+% nosetests
+............................
+----------------------------------------------------------------------
+Ran 28 tests in 2.876s
+OK
+  </pre>
+
+  <h2>Create Database and Configure</h2>
+
+  <p>To set up the database (again, using PostgreSQL as the example), 
+  you'll need to create a database user and a new database:</p>
+
+  <pre>
+# for PostgreSQL:
+% createuser tasty
+% createdb tasty
+  </pre>
+
+  <p>If you change either of those, you'll want to change the entries in dev.cfg and/or prod.cfg</p>
+
+  <p>TurboGears can then set up the database tables with:</p>
+  <pre>
+% tg-admin sql create
+  </pre>
+
+  <p>If you're upgrading from a previous release of Tasty, you can just use your existing database. 
+  Just check the config files and make sure they have the right settings. </p>
+
+  <h2>Run the Tasty Server</h2>
+
+  <p>It should be ready to run:</p>
+
+  <pre>
+% python start-tasty.py
+# or, for a production setup (no auto-reloading, etc)
+% python start-tasty.py prod.cfg
+  </pre>
+
+  <h2>Deployment</h2>
+
+  <p>The recommended approach to deployment is to run Tasty as a standalone server behind an Apache
+  (or lighttpd or nginx or ...) proxy. <a href="http://thraxil.org/users/anders/posts/2006/09/13/TurboGears-Deployment-with-supervisord-and-workingenv-py/">This article</a> 
+  covers how to set up a good production deployment of a TurboGears application and it's instructions should
+  work fine for Tasty.</p>
+
+  <p>Tasty can also be deployed as a mod_python application using mpcp. There is a mp_setup() function defined
+  in start-tasty.py. This is a trickier deployment to set up though and is no longer recommended.</p>
+</div>
+</div>
+</body>
+
+</html>

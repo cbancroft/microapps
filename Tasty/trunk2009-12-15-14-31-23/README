@@ -1,0 +1,47 @@
+Tasty
+=====
+
+
+Tasty is a powerful and efficient REST tagging service. 
+
+It was developed at the Columbia Center For New Media Teaching and
+Learning <http://www.ccnmtl.columbia.edu/>. 
+
+REQUIREMENTS
+============
+
+* Python 2.4
+* TurboGears 1.0b1
+* Postgres (other databases may work but pg's the only one it's been
+  tested on)
+* restresource 0.1
+* restclient 0.9.5
+* mpcp (to use with mod_python+apache)
+* sqlite and pysqlite to run the unit tests
+
+TESTING
+=======
+
+to run the unit tests, do:
+
+  % nosetests
+   
+BUGS
+====
+
+please report bugs and make feature requests via the microapps sourceforge
+site: 
+
+       http://sourceforge.net/projects/microapps/
+
+
+please ignore the push.conf and pusher.py files; they are used by our
+internal build system. 
+
+CONTRIBUTORS
+============
+
+* Anders Pearson (CCNMTL)
+* Schuyler Duveen (CCNMTL)
+* Jonah Bossewitch (CCNMTL)
+* Sidnei da Silva (Enfold)
