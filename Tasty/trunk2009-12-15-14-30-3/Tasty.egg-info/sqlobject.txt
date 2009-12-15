@@ -1,0 +1,2 @@
+db_module=tasty.model
+history_dir=$base/tasty/sqlobject-history

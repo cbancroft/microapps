@@ -1,0 +1,29 @@
+<html>
+  <head><title>Tasty Tag Model</title>
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+
+<body>
+  <div id="page">
+  <div id="sidebar">
+    <ul>
+      <li><a href="index.html">Tasty</a></li>
+      <li><a href="changelog.html">Changelog</a></li>
+      <li><a href="requirements.html">Requirements</a></li>
+      <li><a href="installation.html">Installation</a></li>
+      <li>Tag Model</li>
+      <li><a href="rest_interface.html">REST Interface</a></li>
+      <li><a href="client_implementations.html">Client Implementations</a></li>
+      <li><a href="tasty_sites.html">Sites</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+<h1>Tag Model</h1>
+
+<p>the core resources are Services, Users, Items, and Tags.</p>
+
+<p>the Service resource exists primarily as a form of namespacing. it allows multiple applications to use the same tag server without stomping on each others' data. all points within an application that access the tag server should use the same Service. the service MUST always be specified in every request URI.</p>
+
+<p>the Users, Items, and Tags use the model <a href="http://tagschema.com/blogs/tagschema/2005/06/slicing-and-dicing-data-20-part-2.html">described</a> on tagschema.com. </p>
+</div></div></body></html>
