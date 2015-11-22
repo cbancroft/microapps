@@ -1,0 +1,1 @@
+see [microapps.org](http://microapps.org) for more information. There's also a [discussion list](http://groups.google.com/group/microapps).
